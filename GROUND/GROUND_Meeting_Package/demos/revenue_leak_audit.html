@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revenue Leak Audit — Ground AI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F5F2ED;
+  --surface: #FDFCFA;
+  --surface2: #EDE9E2;
+  --border: rgba(60,45,20,0.12);
+  --border-med: rgba(60,45,20,0.24);
+  --text-primary: #1C1510;
+  --text-secondary: #6B5F52;
+  --text-muted: #A09080;
+  --accent: #C45E1A;
+  --accent-dark: #8C4010;
+  --accent-light: #F5E6D8;
+  --accent-mid: #E8A070;
+  --green: #2D7A4F;
+  --green-light: #E0F0E8;
+  --amber: #C47A1A;
+  --amber-light: #FDF0D8;
+  --red: #C42A1A;
+  --red-light: #FAE8E6;
+  --font-serif: 'Libre Baskerville', Georgia, serif;
+  --font-mono: 'DM Mono', monospace;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+
+body {
+  font-family: var(--font-mono);
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* ── NAV ── */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.nav-logo {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-decoration: none;
+}
+.nav-link {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+.nav-link:hover { color: var(--text-primary); }
+
+/* ── HERO ── */
+.hero {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 64px 24px 48px;
+  text-align: center;
+}
+.hero-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.hero-eyebrow::before,
+.hero-eyebrow::after {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--accent-mid);
+}
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.15;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--accent);
+}
+.hero-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  max-width: 480px;
+  margin: 0 auto 32px;
+}
+.hero-badges {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.badge {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.badge-accent {
+  background: var(--accent-light);
+  border-color: var(--accent-mid);
+  color: var(--accent);
+}
+
+/* ── FORM CARD ── */
+.audit-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+}
+
+.section-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section { margin-bottom: 28px; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 10px; color: var(--text-secondary); letter-spacing: 0.06em; }
+
+input[type="number"], select {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  width: 100%;
+  transition: border-color 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+input[type="number"]:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-mid);
+}
+
+.check-group { display: flex; flex-direction: column; gap: 10px; }
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.check-row input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.run-btn {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+  transition: background 0.15s, transform 0.1s;
+  margin-top: 8px;
+}
+.run-btn:hover { background: var(--accent-dark); }
+.run-btn:active { transform: scale(0.99); }
+.run-btn:disabled {
+  background: var(--surface2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  cursor: not-allowed;
+}
+
+/* ── LOADING ── */
+.loading-state {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.loading-state.visible { display: flex; }
+.dot-pulse { display: flex; gap: 5px; }
+.dot-pulse span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+.dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.25} 50%{opacity:1} }
+
+/* ── RESULTS ── */
+.results { display: none; }
+.results.visible { display: block; }
+
+.total-block {
+  text-align: center;
+  padding: 32px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.total-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.total-number {
+  font-family: var(--font-serif);
+  font-size: 52px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.total-annual {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.total-annual strong { color: var(--text-primary); }
+
+.leaks-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.leak-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.leak-row:last-child { border-bottom: none; }
+
+.leak-sev {
+  width: 4px;
+  border-radius: 2px;
+  align-self: stretch;
+  min-height: 40px;
+  flex-shrink: 0;
+}
+.sev-high { background: var(--red); }
+.sev-med  { background: var(--amber); }
+.sev-low  { background: var(--green); }
+
+.leak-body { flex: 1; min-width: 0; }
+.leak-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+.leak-desc  { font-size: 11px; color: var(--text-secondary); line-height: 1.6; }
+.leak-amount { font-size: 15px; font-weight: 500; color: var(--text-primary); white-space: nowrap; padding-top: 2px; }
+.leak-tag {
+  display: inline-block;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.tag-high { background: var(--red-light); color: var(--red); }
+.tag-med  { background: var(--amber-light); color: var(--amber); }
+.tag-low  { background: var(--green-light); color: var(--green); }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+
+/* ── AI REC BOX ── */
+.ai-box {
+  background: linear-gradient(135deg, #1C1510 0%, #2E1E0E 100%);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin-top: 4px;
+}
+.ai-box-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-mid);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+.ai-text {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: #F5E6D8;
+  line-height: 1.8;
+}
+.ai-thinking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-mid);
+  font-size: 12px;
+}
+
+/* ── CTA ── */
+.cta-block {
+  background: var(--accent-light);
+  border: 1px solid var(--accent-mid);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.cta-text { font-size: 13px; color: var(--accent-dark); line-height: 1.6; }
+.cta-text strong { display: block; font-size: 14px; margin-bottom: 2px; }
+.cta-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-block;
+}
+.cta-btn:hover { background: var(--accent-dark); }
+
+.reset-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 16px;
+  display: block;
+}
+
+/* ── FOOTER ── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 24px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.footer a { color: var(--text-muted); text-decoration: none; }
+.footer a:hover { color: var(--text-primary); }
+
+@media (max-width: 600px) {
+  .nav { padding: 16px 20px; }
+  .hero { padding: 40px 20px 32px; }
+  .hero-title { font-size: 28px; }
+  .audit-wrap { padding: 0 16px 60px; }
+  .card { padding: 22px 18px; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .total-number { font-size: 40px; }
+  .cta-block { flex-direction: column; }
+  .footer { flex-direction: column; gap: 8px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="https://groundai.netlify.app" class="nav-logo">Ground</a>
+  <a href="https://groundai.netlify.app" class="nav-link">← Back to site</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">Ground AI · Free Assessment</div>
+  <h1 class="hero-title">Find your <em>revenue leaks</em><br>in under 2 minutes</h1>
+  <p class="hero-sub">Most independent coffee shops lose $2,000–$6,000 per month to fixable inefficiencies. Answer 8 questions and we'll show you exactly where yours are going.</p>
+  <div class="hero-badges">
+    <span class="badge badge-accent">Free · No signup required</span>
+    <span class="badge">Takes 90 seconds</span>
+    <span class="badge">Powered by Ground AI</span>
+  </div>
+</div>
+
+<div class="audit-wrap">
+  <div class="card">
+
+    <!-- FORM -->
+    <div id="audit-form">
+      <div class="section">
+        <div class="section-label">Shop basics</div>
+        <div class="grid-2" style="margin-bottom:12px">
+          <div class="field">
+            <label for="monthly-rev">Monthly revenue ($)</label>
+            <input type="number" id="monthly-rev" placeholder="28000" min="0" />
+          </div>
+          <div class="field">
+            <label for="avg-ticket">Avg ticket size ($)</label>
+            <input type="number" id="avg-ticket" placeholder="6.50" step="0.01" min="0" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="labor-cost">Monthly labor cost ($)</label>
+            <input type="number" id="labor-cost" placeholder="9000" min="0" />
+          </div>
+          <div class="field">
+            <label for="supply-cost">Monthly supply cost ($)</label>
+            <input type="number" id="supply-cost" placeholder="7000" min="0" />
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Operations</div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="daily-customers">Daily customer count</label>
+            <input type="number" id="daily-customers" placeholder="150" min="0" />
+          </div>
+          <div class="field">
+            <label for="rating">Google / Yelp avg rating</label>
+            <select id="rating">
+              <option value="4.5">4.5+ stars</option>
+              <option value="4.0" selected>4.0–4.4 stars</option>
+              <option value="3.5">3.5–3.9 stars</option>
+              <option value="3.0">Below 3.5 stars</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Known pain points — check all that apply</div>
+        <div class="check-group">
+          <label class="check-row"><input type="checkbox" id="chk-menu" /> My menu hasn't been reviewed or updated in 6+ months</label>
+          <label class="check-row"><input type="checkbox" id="chk-labor" /> I often over-staff slow periods or under-staff rushes</label>
+          <label class="check-row"><input type="checkbox" id="chk-vendor" /> I haven't renegotiated vendor contracts recently</label>
+          <label class="check-row"><input type="checkbox" id="chk-upsell" /> Staff rarely upsell or suggest add-ons at the counter</label>
+          <label class="check-row"><input type="checkbox" id="chk-reviews" /> I don't track or respond to reviews consistently</label>
+          <label class="check-row"><input type="checkbox" id="chk-waste" /> I regularly throw out food or supplies at end of week</label>
+        </div>
+      </div>
+
+      <button class="run-btn" id="run-btn" onclick="runAudit()">Calculate My Revenue Leaks →</button>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading-state" class="loading-state">
+      <div class="dot-pulse"><span></span><span></span><span></span></div>
+      <span>Calculating your leaks against industry benchmarks...</span>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results" class="results">
+
+      <div class="total-block">
+        <div class="total-eyebrow">Estimated monthly revenue leak</div>
+        <div class="total-number" id="total-num">$0</div>
+        <div class="total-annual" id="total-annual">Analyzing your shop...</div>
+      </div>
+
+      <div class="leaks-label">Where the money is going</div>
+      <div id="leak-list"></div>
+
+      <hr class="divider" />
+
+      <div class="ai-box">
+        <div class="ai-box-label"><span class="ai-dot"></span> Ground AI · Priority recommendations</div>
+        <div class="ai-text" id="ai-rec">
+          <div class="ai-thinking">
+            <div class="dot-pulse"><span></span><span></span><span></span></div>
+            <span>Generating your action plan...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-block">
+        <div class="cta-text">
+          <strong>Ready to plug these leaks?</strong>
+          Ground builds the tools to fix every item above — starting with a free 30-minute strategy call.
+        </div>
+        <a href="https://groundai.netlify.app#contact" class="cta-btn">Talk to Ground →</a>
+      </div>
+
+      <button class="reset-btn" onclick="resetAudit()">← Run audit again</button>
+    </div>
+
+  </div>
+</div>
+
+<footer class="footer">
+  <span>© 2026 Ground AI Consulting · groundai.netlify.app</span>
+  <span>Estimates based on industry benchmarks. Results vary by location.</span>
+</footer>
+
+<script>
+function fmt(n) {
+  return '$' + Math.round(n).toLocaleString();
+}
+
+function runAudit() {
+  const rev      = parseFloat(document.getElementById('monthly-rev').value)      || 28000;
+  const ticket   = parseFloat(document.getElementById('avg-ticket').value)        || 6.50;
+  const labor    = parseFloat(document.getElementById('labor-cost').value)        || 9000;
+  const supply   = parseFloat(document.getElementById('supply-cost').value)       || 7000;
+  const customers = parseFloat(document.getElementById('daily-customers').value)  || 150;
+  const rating   = parseFloat(document.getElementById('rating').value);
+
+  const chkMenu    = document.getElementById('chk-menu').checked;
+  const chkLabor   = document.getElementById('chk-labor').checked;
+  const chkVendor  = document.getElementById('chk-vendor').checked;
+  const chkUpsell  = document.getElementById('chk-upsell').checked;
+  const chkReviews = document.getElementById('chk-reviews').checked;
+  const chkWaste   = document.getElementById('chk-waste').checked;
+
+  document.getElementById('audit-form').style.display = 'none';
+  document.getElementById('loading-state').classList.add('visible');
+
+  setTimeout(() => {
+    const leaks = [];
+
+    if (chkUpsell || ticket < 7) {
+      leaks.push({
+        title: 'Missed upsells & low avg ticket',
+        desc: 'Shops using AI-assisted ordering see 8–15% higher ticket size on average. At your volume, closing half that gap alone moves the needle significantly.',
+        amount: rev * 0.10,
+        sev: 'high',
+        module: 'Ordering AI'
+      });
+    }
+
+    if (chkLabor) {
+      leaks.push({
+        title: 'Labor scheduling inefficiency',
+        desc: 'Overstaffing slow periods and understaffing rushes costs the average shop 8–12% of total labor spend. Demand-based scheduling closes this gap.',
+        amount: labor * 0.10,
+        sev: 'high',
+        module: 'Staff Scheduling'
+      });
+    }
+
+    if (chkMenu) {
+      leaks.push({
+        title: 'Underperforming menu items',
+        desc: 'An unoptimized menu typically carries 20–30% of items that dilute margins or staff time. Pruning and repricing can recover 5–8% of total revenue.',
+        amount: rev * 0.06,
+        sev: 'med',
+        module: 'Menu Optimization'
+      });
+    }
+
+    if (chkVendor) {
+      leaks.push({
+        title: 'Vendor contract overpayment',
+        desc: 'Most independent shops overpay on at least 2 supplier contracts. Renegotiation or switching typically saves 10–15% on flagged invoices.',
+        amount: supply * 0.12,
+        sev: 'med',
+        module: 'Contract Analysis'
+      });
+    }
+
+    if (chkWaste) {
+      leaks.push({
+        title: 'Food & supply waste',
+        desc: 'Without demand forecasting, over-ordering is the default. Shops using data-driven prep reduce waste by 6–10% of total supply spend.',
+        amount: supply * 0.08,
+        sev: 'med',
+        module: 'Forecasting Dashboard'
+      });
+    }
+
+    if (chkReviews || rating <= 3.9) {
+      const reviewLeak = customers * 0.05 * ticket * 30;
+      leaks.push({
+        title: rating < 4.0 ? 'Below-benchmark rating suppressing traffic' : 'Inconsistent review engagement',
+        desc: rating < 4.0
+          ? 'A sub-4.0 rating suppresses new customer acquisition by 15–20%. Addressing the recurring themes in your reviews directly recovers this.'
+          : 'Shops that actively engage reviews see measurably higher return rates and referral traffic.',
+        amount: reviewLeak,
+        sev: rating < 4.0 ? 'high' : 'low',
+        module: 'Sentiment Analysis'
+      });
+    }
+
+    if (leaks.length === 0) {
+      leaks.push({
+        title: 'Baseline efficiency gap vs. top quartile',
+        desc: 'Even well-run shops typically trail top-quartile independents by 5–8% in overall efficiency. Data-driven operations close this gap.',
+        amount: rev * 0.06,
+        sev: 'low',
+        module: 'Operations Dashboard'
+      });
+    }
+
+    leaks.sort((a, b) => b.amount - a.amount);
+    const total = leaks.reduce((s, l) => s + l.amount, 0);
+
+    document.getElementById('total-num').textContent = fmt(total);
+    document.getElementById('total-annual').textContent =
+      fmt(total * 12) + ' annually · based on your inputs vs. industry benchmarks';
+
+    const list = document.getElementById('leak-list');
+    list.innerHTML = '';
+    leaks.forEach(l => {
+      const sevClass = l.sev === 'high' ? 'sev-high' : l.sev === 'med' ? 'sev-med' : 'sev-low';
+      const tagClass = l.sev === 'high' ? 'tag-high' : l.sev === 'med' ? 'tag-med' : 'tag-low';
+      const tagText  = l.sev === 'high' ? 'High impact' : l.sev === 'med' ? 'Medium' : 'Quick win';
+      list.innerHTML += `
+        <div class="leak-row">
+          <div class="leak-sev ${sevClass}"></div>
+          <div class="leak-body">
+            <div class="leak-title">${l.title} <span class="leak-tag ${tagClass}">${tagText}</span></div>
+            <div class="leak-desc">${l.desc}</div>
+          </div>
+          <div class="leak-amount">${fmt(l.amount)}/mo</div>
+        </div>`;
+    });
+
+    document.getElementById('loading-state').classList.remove('visible');
+    document.getElementById('results').classList.add('visible');
+
+    const prompt = `You are Ground, an AI consulting firm for independent coffee shops. A shop owner just completed a revenue leak audit.
+
+Shop profile:
+- Monthly revenue: $${Math.round(rev).toLocaleString()}
+- Avg ticket size: $${ticket.toFixed(2)}
+- Monthly labor: $${Math.round(labor).toLocaleString()}
+- Monthly supplies: $${Math.round(supply).toLocaleString()}
+- Daily customers: ${Math.round(customers)}
+- Rating: ${rating} stars
+- Total estimated monthly leak: ${fmt(total)} (${fmt(total * 12)}/year)
+
+Identified leaks (sorted by size):
+${leaks.map(l => `- ${l.title}: ${fmt(l.amount)}/mo [${l.sev} priority] → Fix with: ${l.module}`).join('\n')}
+
+Write 3–4 sentences of direct, specific recommendations for this owner. Be concrete and name actual dollar amounts. Lead with the single highest-leverage action. Use plain conversational language. No bullet points — write as a short paragraph. End with one sentence about what Ground would implement first and the expected timeline.`;
+
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      const text = data.content && data.content[0] && data.content[0].text;
+      document.getElementById('ai-rec').textContent = text || 'Your highest-leverage fix is the top item in the list above. Ground recommends starting there within the next 30 days — most clients see measurable improvement within the first month.';
+    })
+    .catch(() => {
+      document.getElementById('ai-rec').textContent = 'Your highest-leverage fix is the top item in the list above. Ground recommends starting there within the next 30 days — most clients see measurable improvement within the first month.';
+    });
+
+  }, 1200);
+}
+
+function resetAudit() {
+  document.getElementById('results').classList.remove('visible');
+  document.getElementById('loading-state').classList.remove('visible');
+  document.getElementById('audit-form').style.display = 'block';
+  document.getElementById('ai-rec').innerHTML = `<div class="ai-thinking"><div class="dot-pulse"><span></span><span></span><span></span></div><span>Generating your action plan...</span></div>`;
+}
+</script>
+</body>
+</html>

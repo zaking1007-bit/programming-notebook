@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentiment Analysis — Comma Cafe · Ground AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f8f5ef;
+  --surface: #fffdf9;
+  --surface2: #f1ece2;
+  --border: rgba(23,18,13,0.12);
+  --border-med: rgba(23,18,13,0.24);
+  --text-primary: #17120d;
+  --text-secondary: #6f655b;
+  --text-muted: #8c8174;
+  --accent: #a84f21;
+  --accent-dark: #7a3815;
+  --accent-light: #f3e3d8;
+  --accent-mid: #c98a5e;
+  --green: #536b54;
+  --green-light: #e7ece6;
+  --amber: #d99b35;
+  --amber-light: #faf0dc;
+  --red: #b3261e;
+  --red-light: #f8e4e2;
+  --blue: #2d5f73;
+  --blue-light: #e3edf0;
+  --espresso: #17120d;
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --radius: 8px;
+  --radius-lg: 8px;
+}
+
+body {
+  font-family: var(--font-mono);
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* NAV */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 40px;
+  background: var(--espresso);
+  border-bottom: 1px solid rgba(200,121,42,0.2);
+}
+.nav-logo { font-size: 12px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: #d99b35; text-decoration: none; }
+.nav-right { font-size: 10px; color: rgba(245,239,224,0.4); letter-spacing: 0.08em; }
+
+/* HEADER */
+.report-header {
+  background: linear-gradient(135deg, var(--espresso) 0%, #2a1c14 100%);
+  padding: 48px 40px 40px;
+  position: relative;
+  overflow: hidden;
+}
+.report-header::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  border: 1px solid rgba(200,121,42,0.1);
+}
+.report-header::after {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  border: 1px solid rgba(200,121,42,0.15);
+}
+.report-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(200,121,42,0.6);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #536b54; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+.report-title {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 700;
+  color: #f3e3d8;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+.report-subtitle {
+  font-size: 12px;
+  color: rgba(200,121,42,0.55);
+  letter-spacing: 0.08em;
+  margin-bottom: 28px;
+}
+.header-meta-row {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.header-meta-item { display: flex; flex-direction: column; gap: 3px; }
+.meta-label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(200,121,42,0.4); }
+.meta-val { font-size: 12px; color: rgba(245,239,224,0.75); }
+
+/* SCORE BANNER */
+.score-banner {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 40px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.score-main { display: flex; align-items: baseline; gap: 10px; }
+.score-num {
+  font-family: var(--font-serif);
+  font-size: 52px;
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+}
+.score-denom { font-size: 18px; color: var(--text-muted); }
+.score-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+.score-divider { width: 1px; height: 52px; background: var(--border); }
+.score-stat { display: flex; flex-direction: column; gap: 4px; }
+.score-stat-num { font-family: var(--font-serif); font-size: 26px; color: var(--text-primary); line-height: 1; }
+.score-stat-label { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.overall-verdict {
+  margin-left: auto;
+  background: var(--green-light);
+  border: 1px solid rgba(45,122,79,0.3);
+  border-radius: 6px;
+  padding: 12px 20px;
+  text-align: center;
+}
+.verdict-label { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); margin-bottom: 4px; }
+.verdict-text { font-family: var(--font-serif); font-size: 18px; color: var(--green); font-style: italic; }
+
+/* BODY */
+.body { max-width: 960px; margin: 0 auto; padding: 32px 40px 64px; }
+
+/* SECTIONS */
+.section { margin-bottom: 36px; }
+.section-label {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-label span { color: var(--accent); }
+
+/* THEME CARDS */
+.theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.theme-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.theme-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.theme-card.positive::before { background: var(--green); }
+.theme-card.caution::before { background: var(--amber); }
+.theme-card.negative::before { background: var(--red); }
+.theme-icon { font-size: 22px; margin-bottom: 10px; display: block; }
+.theme-name { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+.theme-count {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.theme-bar-track {
+  background: var(--surface2);
+  border-radius: 2px;
+  height: 4px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.theme-bar-fill { height: 100%; border-radius: 2px; }
+.positive .theme-bar-fill { background: var(--green); }
+.caution .theme-bar-fill { background: var(--amber); }
+.negative .theme-bar-fill { background: var(--red); }
+.theme-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.7; }
+.theme-sev {
+  display: inline-block;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 8px;
+}
+.sev-positive { background: var(--green-light); color: var(--green); }
+.sev-caution { background: var(--amber-light); color: var(--amber); }
+.sev-negative { background: var(--red-light); color: var(--red); }
+.sev-blue { background: var(--blue-light); color: var(--blue); }
+
+/* REVIEW QUOTES */
+.quote-list { display: flex; flex-direction: column; gap: 12px; }
+.quote-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.quote-bar {
+  width: 3px;
+  border-radius: 2px;
+  align-self: stretch;
+  min-height: 32px;
+  flex-shrink: 0;
+}
+.quote-body { flex: 1; }
+.quote-text {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-primary);
+  line-height: 1.7;
+  margin-bottom: 6px;
+}
+.quote-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.quote-source { color: var(--accent); }
+.stars { color: var(--amber); letter-spacing: -1px; }
+
+/* OPPORTUNITIES TABLE */
+.opp-list { display: flex; flex-direction: column; gap: 10px; }
+.opp-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.opp-num {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--accent-mid);
+  line-height: 1;
+  min-width: 28px;
+  flex-shrink: 0;
+  font-style: italic;
+}
+.opp-body { flex: 1; }
+.opp-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+.opp-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.7; }
+.opp-impact {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
+}
+.impact-high { background: var(--green-light); color: var(--green); }
+.impact-med { background: var(--amber-light); color: var(--amber); }
+
+/* COMPETITOR CONTEXT */
+.comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.comp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.comp-name { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+.comp-rating {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.comp-note { font-size: 11px; color: var(--text-secondary); line-height: 1.6; }
+.comma-comp-card {
+  background: var(--accent-light);
+  border-color: var(--accent-mid);
+}
+.comma-comp-card .comp-name { color: var(--accent-dark); }
+.comma-comp-card .comp-rating { color: var(--accent-dark); }
+
+/* SUMMARY BOX */
+.summary-box {
+  background: linear-gradient(135deg, var(--espresso), #2a1c14);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+}
+.summary-label {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(200,121,42,0.55);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.summary-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: pulse 2s ease-in-out infinite; }
+.summary-text {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(245,230,216,0.88);
+  line-height: 1.85;
+}
+
+/* FOOTER */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+.footer-badge {
+  background: var(--accent-light);
+  border: 1px solid var(--accent-mid);
+  color: var(--accent);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 720px) {
+  .nav { padding: 16px 20px; }
+  .report-header { padding: 32px 20px; }
+  .score-banner { padding: 16px 20px; gap: 16px; }
+  .overall-verdict { margin-left: 0; }
+  .body { padding: 24px 20px 48px; }
+  .theme-grid { grid-template-columns: 1fr; }
+  .comp-grid { grid-template-columns: 1fr; }
+  .footer { flex-direction: column; gap: 8px; text-align: center; }
+}
+
+/* ── Ground shared site nav (injected) ── */
+.gnd-header{position:sticky;top:0;z-index:200;background:rgba(248,245,239,0.95);backdrop-filter:blur(14px);border-bottom:1px solid #ddd4c8;font-family:'Inter',ui-sans-serif,system-ui,sans-serif;}
+.gnd-wrap{width:min(1120px, calc(100% - 40px));margin:0 auto;}
+.gnd-nav{min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:18px;}
+.gnd-brand{font-weight:800;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:#17120d;font-size:14px;flex-shrink:0;}
+.gnd-nav-links{display:flex;align-items:center;gap:16px;font-size:13px;color:#6f655b;flex-wrap:wrap;}
+.gnd-nav-links a{text-decoration:none;color:#6f655b;white-space:nowrap;}
+.gnd-nav-links a:hover{color:#17120d;}
+.gnd-nav-links a.gnd-active{color:#a84f21;font-weight:600;}
+.gnd-cta{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 14px;border-radius:6px;background:#17120d;color:#fffdf9;text-decoration:none;font-weight:700;font-size:12px;font-family:'Inter',sans-serif;white-space:nowrap;flex-shrink:0;}
+.gnd-footer{border-top:1px solid #ddd4c8;padding:22px 0;font-family:'Inter',ui-sans-serif,system-ui,sans-serif;color:#6f655b;font-size:12px;background:#f8f5ef;}
+.gnd-footer-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.gnd-footer a{color:#6f655b;}
+@media(max-width:760px){.gnd-nav-links{display:none;}}
+</style>
+</head>
+<body>
+<header class="gnd-header"><nav class="gnd-nav gnd-wrap">
+<a href="../index.html" class="gnd-brand">Ground</a>
+<div class="gnd-nav-links"><a href="../index.html#capabilities">Capabilities</a><a href="../index.html#demos">All demos</a><a href="ground_dashboard.html">Dashboard</a><a href="revenue_leak_audit.html">Revenue audit</a><a href="ground_customer_engine.html">Customers</a><a href="comma_cafe_sentiment_report.html" class="gnd-active">Sentiment</a></div>
+<a class="gnd-cta" href="mailto:hello@groundai.co">Book a call</a>
+</nav></header>
+
+
+<nav class="nav">
+  <a href="#" class="nav-logo">Ground</a>
+  <div class="nav-right">Sentiment Scanner · Confidential Client Report</div>
+</nav>
+
+<!-- HEADER -->
+<div class="report-header">
+  <div class="report-eyebrow">
+    <div class="live-dot"></div>
+    Ground AI · Sentiment Analysis Report
+  </div>
+  <div class="report-title">Comma Cafe</div>
+  <div class="report-subtitle">415 E Main St · Shawnee, OK 74801 · comma.cafe</div>
+  <div class="header-meta-row">
+    <div class="header-meta-item">
+      <span class="meta-label">Report Date</span>
+      <span class="meta-val">April 27, 2026</span>
+    </div>
+    <div class="header-meta-item">
+      <span class="meta-label">Sources Scanned</span>
+      <span class="meta-val">Google · Yelp · Facebook · Restaurantji · Wheree · Sirved · TravelOK</span>
+    </div>
+    <div class="header-meta-item">
+      <span class="meta-label">Review Volume</span>
+      <span class="meta-val">625+ reviews across platforms</span>
+    </div>
+    <div class="header-meta-item">
+      <span class="meta-label">Prepared by</span>
+      <span class="meta-val">Ground AI Consulting</span>
+    </div>
+  </div>
+</div>
+
+<!-- SCORE BANNER -->
+<div class="score-banner">
+  <div>
+    <div class="score-main">
+      <div class="score-num">4.7</div>
+      <div class="score-denom">/ 5</div>
+    </div>
+    <div class="score-label">Composite Sentiment Score</div>
+  </div>
+  <div class="score-divider"></div>
+  <div class="score-stat">
+    <div class="score-stat-num">625+</div>
+    <div class="score-stat-label">Total Reviews</div>
+  </div>
+  <div class="score-divider"></div>
+  <div class="score-stat">
+    <div class="score-stat-num">96%</div>
+    <div class="score-stat-label">Recommend (Facebook)</div>
+  </div>
+  <div class="score-divider"></div>
+  <div class="score-stat">
+    <div class="score-stat-num">4.4</div>
+    <div class="score-stat-label">Yelp / Menupix</div>
+  </div>
+  <div class="score-divider"></div>
+  <div class="score-stat">
+    <div class="score-stat-num">4.7</div>
+    <div class="score-stat-label">Restaurantji (73 reviews)</div>
+  </div>
+  <div class="overall-verdict">
+    <div class="verdict-label">Overall Reputation</div>
+    <div class="verdict-text">Strongly Positive</div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- EXECUTIVE SUMMARY -->
+  <div class="section">
+    <div class="section-label"><span>01</span> Executive Summary</div>
+    <div class="summary-box">
+      <div class="summary-label"><span class="summary-dot"></span> Ground AI · Analysis</div>
+      <div class="summary-text">
+        Comma Cafe is one of Shawnee's most beloved independent coffee shops, carrying an exceptionally strong reputation built on three pillars: outstanding beverage quality, a warm and distinctive atmosphere, and genuinely friendly ownership and staff. Across 625+ reviews on seven platforms, sentiment is overwhelmingly positive — with a 96% Facebook recommendation rate and a 4.7 composite score. The shop's community-first identity, local milk sourcing, gluten-free options, and pet-friendly patios differentiate it meaningfully from chain competitors. Minor friction points appear around service speed during busy periods and limited platform presence on Yelp (low review count). Comma's biggest opportunity is not fixing problems — it's amplifying an already excellent reputation through review volume growth, upsell optimization, and leveraging its loyal customer base.
+      </div>
+    </div>
+  </div>
+
+  <!-- SENTIMENT THEMES -->
+  <div class="section">
+    <div class="section-label"><span>02</span> Recurring Sentiment Themes</div>
+    <div class="theme-grid">
+
+      <div class="theme-card positive">
+        <span class="theme-icon">☕</span>
+        <div class="theme-name">Coffee & Beverage Quality</div>
+        <div class="theme-count">Mentioned in ~85% of reviews</div>
+        <div class="theme-bar-track"><div class="theme-bar-fill" style="width:85%"></div></div>
+        <div class="theme-desc">Customers consistently praise drink quality across signatures — White Mocha Latte, Dirty Chai, Honey Latte, Oat Latte, and Cold Brew — with specific callouts for locally sourced whole milk and distinctive roast profiles.</div>
+        <span class="theme-sev sev-positive">High Praise</span>
+      </div>
+
+      <div class="theme-card positive">
+        <span class="theme-icon">🏡</span>
+        <div class="theme-name">Atmosphere & Space</div>
+        <div class="theme-count">Mentioned in ~78% of reviews</div>
+        <div class="theme-bar-track"><div class="theme-bar-fill" style="width:78%"></div></div>
+        <div class="theme-desc">The interior design, cozy seating, plant shop, and dual patio areas are frequently cited as standout features. "Warm and inviting" is the most repeated phrase. Customers specifically mention enjoying working, meeting, and relaxing there.</div>
+        <span class="theme-sev sev-positive">High Praise</span>
+      </div>
+
+      <div class="theme-card positive">
+        <span class="theme-icon">🤝</span>
+        <div class="theme-name">Staff & Ownership Warmth</div>
+        <div class="theme-count">Mentioned in ~70% of reviews</div>
+        <div class="theme-bar-track"><div class="theme-bar-fill" style="width:70%"></div></div>
+        <div class="theme-desc">Staff friendliness and visible ownership involvement (Rebecca Hilton in particular) generate strong emotional loyalty. Customers frequently note feeling welcomed and recognized. Personal interactions drive return visits.</div>
+        <span class="theme-sev sev-positive">High Praise</span>
+      </div>
+
+      <div class="theme-card positive">
+        <span class="theme-icon">🧁</span>
+        <div class="theme-name">Food & Bakery Items</div>
+        <div class="theme-count">Mentioned in ~55% of reviews</div>
+        <div class="theme-bar-track"><div class="theme-bar-fill" style="width:55%"></div></div>
+        <div class="theme-desc">Pastries (scones, muffins, GF donuts, cinnamon rolls) and brunch options receive strong praise. Top callouts: Cranberry Orange Scone, GF donut, and brunch menu items. Food add-ons are a clear revenue driver but appear underleveraged in customer awareness.</div>
+        <span class="theme-sev sev-positive">Positive</span>
+      </div>
+
+      <div class="theme-card positive">
+        <span class="theme-icon">🌱</span>
+        <div class="theme-name">Inclusivity & Special Options</div>
+        <div class="theme-count">Mentioned in ~35% of reviews</div>
+        <div class="theme-bar-track"><div class="theme-bar-fill" style="width:35%"></div></div>
+        <div class="theme-desc">Gluten-free options, dairy alternatives (oat, almond milk), and pet-friendly patios are frequently highlighted as differentiators — especially by new customers discovering the shop. These features are a genuine acquisition driver.</div>
+        <span class="theme-sev sev-positive">Positive</span>
+      </div>
+
+      <div class="theme-card caution">
+        <span class="theme-icon">⏱️</span>
+        <div class="theme-name">Service Speed (Occasional)</div>
+        <div class="theme-count">Mentioned in ~12% of reviews</div>
+        <div class="theme-bar-track"><div class="theme-bar-fill" style="width:12%"></div></div>
+        <div class="theme-desc">A minority of reviews reference occasional service delays, described by aggregators as "occasional service hiccups." This is not a dominant complaint but surfaces in summary data across multiple platforms. Likely tied to rush periods.</div>
+        <span class="theme-sev sev-caution">Watch</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- VOICE OF CUSTOMER -->
+  <div class="section">
+    <div class="section-label"><span>03</span> Voice of the Customer — Representative Reviews</div>
+    <div class="quote-list">
+
+      <div class="quote-row">
+        <div class="quote-bar" style="background:var(--green)"></div>
+        <div class="quote-body">
+          <div class="quote-text">"Visited Comma for the first time today. I absolutely love the atmosphere of this coffee shop. I just so happen to meet one of the owners Rebecca today as she was working from home — she is super sweet! Loved that this place had gluten free options too (best GF donut!). I have found my new favorite coffee shop!"</div>
+          <div class="quote-meta"><span class="stars">★★★★★</span> <span class="quote-source">Restaurantji</span> <span>· New customer, high acquisition intent</span></div>
+        </div>
+      </div>
+
+      <div class="quote-row">
+        <div class="quote-bar" style="background:var(--green)"></div>
+        <div class="quote-body">
+          <div class="quote-text">"The atmosphere was warm and inviting and the barista was friendly. I ordered my usual breve and the coffee roast they had that day had brighter notes, which made it more distinctive. Comma also has a small plant shop and other small merchandise — neat coffee shop in Shawnee!"</div>
+          <div class="quote-meta"><span class="stars">★★★★★</span> <span class="quote-source">Sirved</span> <span>· Returning customer, quality-focused</span></div>
+        </div>
+      </div>
+
+      <div class="quote-row">
+        <div class="quote-bar" style="background:var(--green)"></div>
+        <div class="quote-body">
+          <div class="quote-text">"Great place for a first date! Meeting friends, family & neighbors. The staff were very sweet. I had a white mocha latte and an orange scone — they were both delicious. Next time I'll have to try their brunch menu. Love this for the town of Shawnee."</div>
+          <div class="quote-meta"><span class="stars">★★★★★</span> <span class="quote-source">Sirved</span> <span>· Social occasion — community anchoring sentiment</span></div>
+        </div>
+      </div>
+
+      <div class="quote-row">
+        <div class="quote-bar" style="background:var(--green)"></div>
+        <div class="quote-body">
+          <div class="quote-text">"I found this amazing spot that I think you'll love! The vibe is perfect, and the food is incredible. You really have to check it out when you get a chance!"</div>
+          <div class="quote-meta"><span class="stars">★★★★★</span> <span class="quote-source">MenuPix, May 2025</span> <span>· Recent — positive trajectory</span></div>
+        </div>
+      </div>
+
+      <div class="quote-row">
+        <div class="quote-bar" style="background:var(--amber)"></div>
+        <div class="quote-body">
+          <div class="quote-text">"Despite occasional service hiccups, the overall ambiance is complemented by a commitment to fostering a sense of community, where individuals of all ages can come together to enjoy a great cup of coffee."</div>
+          <div class="quote-meta"><span class="stars">★★★★☆</span> <span class="quote-source">Wheree — AI-aggregated summary</span> <span>· Reflects minor friction pattern</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- OPPORTUNITIES -->
+  <div class="section">
+    <div class="section-label"><span>04</span> Actionable Opportunities</div>
+    <div class="opp-list">
+
+      <div class="opp-row">
+        <div class="opp-num">1</div>
+        <div class="opp-body">
+          <div class="opp-title">Grow Yelp Review Volume</div>
+          <div class="opp-desc">Comma has strong reviews elsewhere but a thin Yelp presence (a handful of reviews vs. 625+ total). Yelp is a primary discovery platform for new-to-area visitors and travelers on I-40. A simple in-store card or receipt prompt asking satisfied customers to leave a Yelp review could meaningfully close this gap. Target: 50+ Yelp reviews within 90 days.</div>
+        </div>
+        <div class="opp-impact impact-high">High Impact</div>
+      </div>
+
+      <div class="opp-row">
+        <div class="opp-num">2</div>
+        <div class="opp-body">
+          <div class="opp-title">Amplify Brunch Menu Awareness</div>
+          <div class="opp-desc">Multiple reviewers discover the brunch menu only after visiting for coffee, often expressing surprise. This is a missed upsell opportunity. Better in-store signage, a dedicated social post series, and including brunch callouts in drink order prompts could meaningfully increase average ticket and repeat visit motivation. Brunch is a differentiated offering with low competition in downtown Shawnee.</div>
+        </div>
+        <div class="opp-impact impact-high">High Impact</div>
+      </div>
+
+      <div class="opp-row">
+        <div class="opp-num">3</div>
+        <div class="opp-body">
+          <div class="opp-title">Formalize Gluten-Free & Dietary Signage</div>
+          <div class="opp-desc">GF options are a genuine customer acquisition driver — first-time visitors frequently cite them in 5-star reviews. But discovery appears to be accidental (word-of-mouth or on-site browsing). Explicit labeling on the menu board, GF callouts on Instagram, and a "GF options" tag on Google Maps could capture a larger share of dietary-conscious customers who pre-filter their choices online.</div>
+        </div>
+        <div class="opp-impact impact-high">High Impact</div>
+      </div>
+
+      <div class="opp-row">
+        <div class="opp-num">4</div>
+        <div class="opp-body">
+          <div class="opp-title">Address Rush-Period Service Speed</div>
+          <div class="opp-desc">Service delay mentions are a small but recurring signal (roughly 1 in 8 reviews surfaces this). This is likely a staffing or workflow issue during peak morning hours (7:30–9:30 AM). Demand-based scheduling and a pre-order or mobile order option (even a simple text-ahead system) could neutralize this before it becomes a pattern that weighs on ratings.</div>
+        </div>
+        <div class="opp-impact impact-med">Medium Impact</div>
+      </div>
+
+      <div class="opp-row">
+        <div class="opp-num">5</div>
+        <div class="opp-body">
+          <div class="opp-title">Leverage Owner Visibility as a Marketing Asset</div>
+          <div class="opp-desc">Rebecca and the ownership team generate exceptional goodwill when present on the floor — multiple reviews mention meeting an owner by name and converting to loyal regulars as a result. This is an underleveraged marketing channel. Regular "meet the owners" stories on Instagram, behind-the-scenes content, and ownership-narrated posts about sourcing, baking, or the shop's mission could significantly deepen emotional loyalty and social media engagement.</div>
+        </div>
+        <div class="opp-impact impact-med">Medium Impact</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- COMPETITIVE CONTEXT -->
+  <div class="section">
+    <div class="section-label"><span>05</span> Competitive Context — Shawnee Coffee Market</div>
+    <div class="comp-grid">
+      <div class="comp-card comma-comp-card">
+        <div class="comp-name">☕ Comma Cafe <span style="font-size:10px;opacity:0.7;">(this client)</span></div>
+        <div class="comp-rating">4.7</div>
+        <div class="comp-note">Strongest brand identity and community positioning in the market. Only shop with meaningful brunch menu, GF options, and plant shop. Primary weakness: lower Yelp review volume limits discovery reach.</div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-name">Heavenly Grind Coffee</div>
+        <div class="comp-rating">4.9</div>
+        <div class="comp-note">Ranked #1 on Yelp Shawnee with 39 reviews. Smaller footprint, tight community following. Lower review volume makes the 4.9 rating less stable than Comma's broader base.</div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-name">Speak8ery</div>
+        <div class="comp-rating">4.5+</div>
+        <div class="comp-note">Positioned as a premium ($$) option on 8 E Main St — same street as Comma. Competes on coffee quality and food. Closer in profile to Comma than any other local competitor.</div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-name">Dutch Bros Coffee</div>
+        <div class="comp-rating">4.5+</div>
+        <div class="comp-note">Chain drive-through competitor. Strong service sentiment but zero community/atmosphere advantage. Comma's identity as a "third place" makes direct competition minimal for their core customer.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROUND RECOMMENDATIONS -->
+  <div class="section">
+    <div class="section-label"><span>06</span> Ground Recommendations — Next Steps</div>
+    <div class="opp-list">
+      <div class="opp-row" style="background:var(--accent-light);border-color:var(--accent-mid);">
+        <div class="opp-num" style="color:var(--accent-dark);">→</div>
+        <div class="opp-body">
+          <div class="opp-title" style="color:var(--accent-dark);">Deploy Ground Sentiment Scanner (Monthly)</div>
+          <div class="opp-desc" style="color:var(--accent-dark);opacity:0.8;">Set up automated monthly pulls from Google Places API and Yelp Fusion to track review trends, flag emerging complaints early, and measure reputation momentum over time. Delivered as an updated HTML report each month.</div>
+        </div>
+        <div class="opp-impact impact-high">Ground Service</div>
+      </div>
+      <div class="opp-row" style="background:var(--accent-light);border-color:var(--accent-mid);">
+        <div class="opp-num" style="color:var(--accent-dark);">→</div>
+        <div class="opp-body">
+          <div class="opp-title" style="color:var(--accent-dark);">AI Marketing Content — Monthly Social Batch</div>
+          <div class="opp-desc" style="color:var(--accent-dark);opacity:0.8;">Use Comma's brand voice, menu, and seasonal themes to generate 12–16 ready-to-post social captions per month. Prioritize content that highlights brunch, GF options, local sourcing, and the patio — the topics that convert new visitors into regulars.</div>
+        </div>
+        <div class="opp-impact impact-high">Ground Service</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <span>© 2026 Ground AI Consulting · groundai.netlify.app</span>
+  <span class="footer-badge">Sentiment Scanner · Comma Cafe · April 2026</span>
+  <span>This report does not constitute legal or financial advice. Estimates based on publicly available review data.</span>
+</div>
+
+<footer class="gnd-footer"><div class="gnd-wrap gnd-footer-row">
+<span>&copy; 2026 Ground AI Consulting &middot; <a href="../index.html">groundai.netlify.app</a></span>
+<span>Prototype tool for demonstration purposes &middot; not legal or financial advice.</span>
+</div></footer>
+</body>
+</html>

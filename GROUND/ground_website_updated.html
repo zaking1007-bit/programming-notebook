@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ground — AI for Coffee Shops</title>
+<style>
+  :root {
+    --cream: #F5EFE0;
+    --dark: #1A1208;
+    --espresso: #2D1A0A;
+    --brown: #5C3317;
+    --amber: #C8792A;
+    --gold: #E8A94A;
+    --fog: #EDE7D5;
+    --muted: #7A6045;
+    --serif: Georgia, 'Times New Roman', serif;
+    --mono: 'Courier New', Courier, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--cream);
+    color: var(--dark);
+    font-family: var(--serif);
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 60px;
+    background: rgba(245,239,224,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(92,51,23,0.1);
+  }
+
+  .nav-logo {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--espresso);
+    text-decoration: none;
+  }
+
+  .nav-links { display: flex; gap: 36px; list-style: none; }
+
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brown);
+    text-decoration: none;
+  }
+
+  .nav-links a:hover { color: var(--amber); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 130px 60px 90px;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 26px;
+  }
+
+  .hero-title {
+    font-size: clamp(60px, 7vw, 108px);
+    font-weight: normal;
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    color: var(--espresso);
+    margin-bottom: 36px;
+  }
+
+  .hero-title em { font-style: italic; color: var(--amber); }
+
+  .hero-sub {
+    font-size: 17px;
+    font-weight: normal;
+    line-height: 1.65;
+    color: var(--brown);
+    max-width: 380px;
+    margin-bottom: 48px;
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cream);
+    background: var(--espresso);
+    padding: 16px 30px;
+    text-decoration: none;
+    width: fit-content;
+    transition: background 0.25s;
+  }
+
+  .hero-cta:hover { background: var(--amber); }
+
+  .hero-right { background: var(--espresso); position: relative; overflow: hidden; }
+
+  .hero-art {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(200,121,42,0.25);
+    animation: pulse 4s ease-in-out infinite;
+  }
+
+  .ring:nth-child(1) { width: 200px; height: 200px; animation-delay: 0s; }
+  .ring:nth-child(2) { width: 340px; height: 340px; animation-delay: 0.5s; }
+  .ring:nth-child(3) { width: 480px; height: 480px; animation-delay: 1s; }
+  .ring:nth-child(4) { width: 620px; height: 620px; animation-delay: 1.5s; }
+
+  .coffee-glyph {
+    font-size: 80px;
+    opacity: 0.12;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-stats {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    border-top: 1px solid rgba(200,121,42,0.2);
+  }
+
+  .hero-stat {
+    flex: 1;
+    padding: 22px 24px;
+    border-right: 1px solid rgba(200,121,42,0.15);
+  }
+
+  .hero-stat:last-child { border-right: none; }
+
+  .hero-stat-num {
+    font-family: var(--serif);
+    font-size: 34px;
+    color: var(--gold);
+    display: block;
+    line-height: 1;
+  }
+
+  .hero-stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-top: 5px;
+  }
+
+  /* MARQUEE */
+  .marquee-wrap {
+    background: var(--espresso);
+    padding: 16px 0;
+    overflow: hidden;
+  }
+
+  .marquee-track {
+    display: flex;
+    gap: 50px;
+    white-space: nowrap;
+    animation: marquee 22s linear infinite;
+    width: max-content;
+  }
+
+  .marquee-item {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(200,121,42,0.7);
+    flex-shrink: 0;
+  }
+
+  .marquee-dot { color: var(--amber); }
+
+  /* SECTIONS */
+  .section { padding: 110px 60px; }
+
+  .section-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 18px;
+    display: block;
+  }
+
+  .section-title {
+    font-size: clamp(38px, 4.5vw, 62px);
+    font-weight: normal;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--espresso);
+    margin-bottom: 22px;
+  }
+
+  .section-title em { font-style: italic; color: var(--amber); }
+
+  .section-body {
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--brown);
+    max-width: 540px;
+  }
+
+  /* ABOUT */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .about-visual {
+    position: relative;
+    height: 480px;
+  }
+
+  .about-main-card {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, var(--espresso) 50%, var(--brown));
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 36px;
+  }
+
+  .about-big-text {
+    font-size: 96px;
+    font-weight: bold;
+    line-height: 0.9;
+    color: rgba(232,169,74,0.15);
+    letter-spacing: -0.04em;
+  }
+
+  .about-card-body {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    color: rgba(245,239,224,0.7);
+    margin-top: 14px;
+    letter-spacing: 0.03em;
+  }
+
+  .about-float {
+    position: absolute;
+    bottom: -24px;
+    right: -24px;
+    width: 200px;
+    background: var(--amber);
+    padding: 26px;
+  }
+
+  .about-float-title {
+    font-size: 36px;
+    font-weight: normal;
+    color: var(--espresso);
+    line-height: 1;
+  }
+
+  .about-float-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--espresso);
+    opacity: 0.7;
+    margin-top: 8px;
+  }
+
+  /* SERVICES */
+  .services-section {
+    background: var(--espresso);
+    padding: 110px 60px;
+  }
+
+  .services-section .section-tag { color: var(--gold); }
+  .services-section .section-title { color: var(--cream); }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: rgba(200,121,42,0.15);
+    margin-top: 60px;
+    border: 1px solid rgba(200,121,42,0.15);
+  }
+
+  .service-card {
+    background: var(--espresso);
+    padding: 40px 32px;
+    position: relative;
+    transition: background 0.25s;
+  }
+
+  .service-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--amber);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s;
+  }
+
+  .service-card:hover::after { transform: scaleX(1); }
+  .service-card:hover { background: #1e0f04; }
+
+  .service-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(200,121,42,0.6);
+    letter-spacing: 0.1em;
+    margin-bottom: 22px;
+  }
+
+  .service-icon { font-size: 28px; margin-bottom: 16px; display: block; }
+
+  .service-name {
+    font-size: 22px;
+    font-weight: normal;
+    color: var(--cream);
+    line-height: 1.2;
+    margin-bottom: 14px;
+  }
+
+  .service-desc {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.8;
+    color: rgba(245,239,224,0.45);
+    letter-spacing: 0.02em;
+  }
+
+  .service-tag {
+    display: inline-block;
+    margin-top: 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--amber);
+    border: 1px solid rgba(200,121,42,0.3);
+    padding: 5px 10px;
+  }
+
+  .service-card-wide {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 40px;
+    background: var(--espresso);
+    padding: 40px 60px;
+    margin-top: 1px;
+    border: 1px solid rgba(200,121,42,0.15);
+    border-top: none;
+    transition: background 0.25s;
+  }
+
+  .service-card-wide:hover { background: #1e0f04; }
+
+  /* PROCESS */
+  .process-section { background: var(--fog); padding: 110px 60px; }
+
+  .process-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 36px;
+    margin-top: 64px;
+    position: relative;
+  }
+
+  .process-steps::before {
+    content: '';
+    position: absolute;
+    top: 27px; left: 28px; right: 28px;
+    height: 1px;
+    background: linear-gradient(to right, var(--amber), transparent);
+  }
+
+  .step-num {
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: var(--cream);
+    border: 2px solid var(--amber);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: var(--amber);
+    margin-bottom: 26px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-title {
+    font-size: 20px;
+    font-weight: normal;
+    color: var(--espresso);
+    margin-bottom: 10px;
+  }
+
+  .step-body {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.8;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  /* ANALYZER SECTION */
+  .analyzer-section { padding: 110px 60px; }
+
+  .analyzer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 72px;
+    align-items: center;
+  }
+
+  .terminal {
+    background: var(--espresso);
+    box-shadow: 16px 16px 50px rgba(45,26,10,0.18);
+  }
+
+  .terminal-bar {
+    background: rgba(255,255,255,0.05);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .t-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .t-dot:nth-child(1) { background: #FF5F57; }
+  .t-dot:nth-child(2) { background: #FFBD2E; }
+  .t-dot:nth-child(3) { background: #28CA42; }
+
+  .t-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.28);
+    margin-left: 8px;
+  }
+
+  .terminal-body {
+    padding: 26px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 2;
+  }
+
+  .t-row { display: flex; gap: 10px; margin-bottom: 4px; }
+  .t-key { color: var(--gold); min-width: 140px; }
+  .t-val { color: rgba(245,239,224,0.55); }
+
+  .t-risk {
+    background: #c0392b;
+    color: white;
+    padding: 1px 8px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    border-radius: 2px;
+  }
+
+  .t-head {
+    color: var(--amber);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 16px 0 8px;
+  }
+
+  .t-flaw {
+    background: rgba(192,57,43,0.1);
+    border-left: 2px solid #c0392b;
+    padding: 9px 12px;
+    margin-bottom: 7px;
+  }
+
+  .t-flaw-title { color: #ff8a80; font-size: 11px; }
+  .t-flaw-note { color: rgba(245,239,224,0.45); font-size: 11px; margin-top: 3px; }
+
+  .t-rec { color: rgba(232,169,74,0.75); font-size: 11px; line-height: 1.7; }
+
+  /* QUOTE */
+  .quote-section {
+    background: var(--espresso);
+    text-align: center;
+    padding: 90px 60px;
+  }
+
+  .big-quote {
+    font-size: clamp(28px, 3.5vw, 50px);
+    font-style: italic;
+    font-weight: normal;
+    color: var(--cream);
+    line-height: 1.45;
+    max-width: 760px;
+    margin: 0 auto 36px;
+  }
+
+  .big-quote em { font-style: normal; color: var(--gold); }
+
+  .quote-attr {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(200,121,42,0.55);
+  }
+
+  /* CTA */
+  .cta-section {
+    background: var(--fog);
+    padding: 110px 60px;
+    text-align: center;
+  }
+
+  .cta-section .section-title { margin: 0 auto 18px; max-width: 640px; }
+  .cta-section .section-body { margin: 0 auto 46px; text-align: center; }
+
+  .btn-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+  .btn-primary {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cream);
+    background: var(--espresso);
+    padding: 17px 36px;
+    text-decoration: none;
+    transition: background 0.25s;
+  }
+
+  .btn-primary:hover { background: var(--amber); }
+
+  .btn-outline {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--espresso);
+    background: transparent;
+    border: 1px solid var(--espresso);
+    padding: 17px 36px;
+    text-decoration: none;
+    transition: all 0.25s;
+  }
+
+  .btn-outline:hover { background: var(--espresso); color: var(--cream); }
+
+  /* FOOTER */
+  footer {
+    background: var(--dark);
+    padding: 56px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 40px;
+  }
+
+  .footer-logo {
+    font-size: 26px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cream);
+    margin-bottom: 10px;
+  }
+
+  .footer-tagline {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: rgba(200,121,42,0.55);
+  }
+
+  .footer-col-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 18px;
+  }
+
+  .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+  .footer-links a {
+    font-size: 15px;
+    color: rgba(245,239,224,0.45);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--gold); }
+
+  .footer-bottom {
+    background: var(--dark);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 18px 60px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .footer-fine {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: rgba(245,239,224,0.2);
+  }
+
+  /* AUDIT SECTION */
+  .audit-section {
+    background: var(--fog);
+    padding: 110px 60px;
+  }
+
+  .audit-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 72px;
+    align-items: start;
+    margin-top: 60px;
+  }
+
+  .audit-pitch-points {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 28px 0 36px;
+  }
+
+  .audit-pitch-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+  }
+
+  .audit-pitch-point::before {
+    content: '→';
+    color: var(--amber);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .audit-card {
+    background: var(--espresso);
+    box-shadow: 16px 16px 50px rgba(45,26,10,0.16);
+  }
+
+  .audit-card-header {
+    background: rgba(255,255,255,0.04);
+    padding: 13px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .audit-header-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--amber);
+    animation: auditPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes auditPulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  .audit-header-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: rgba(200,121,42,0.65);
+  }
+
+  .audit-body { padding: 24px; }
+
+  .a-sec { margin-bottom: 20px; }
+
+  .a-sec-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(200,121,42,0.5);
+    margin-bottom: 10px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid rgba(200,121,42,0.12);
+  }
+
+  .a-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .a-grid:last-of-type { margin-bottom: 0; }
+
+  .a-field { display: flex; flex-direction: column; gap: 5px; }
+
+  .a-field label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    color: rgba(245,239,224,0.35);
+  }
+
+  .a-field input, .a-field select {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cream);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(200,121,42,0.2);
+    padding: 8px 10px;
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+
+  .a-field input:focus, .a-field select:focus {
+    outline: none;
+    border-color: rgba(200,121,42,0.55);
+  }
+
+  .a-field input::placeholder { color: rgba(245,239,224,0.2); }
+
+  .a-checks { display: flex; flex-direction: column; gap: 8px; }
+
+  .a-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    line-height: 1.6;
+    color: rgba(245,239,224,0.5);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+
+  .a-check input[type="checkbox"] {
+    accent-color: var(--amber);
+    width: 13px;
+    height: 13px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .a-run-btn {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: normal;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 13px;
+    border: none;
+    cursor: pointer;
+    background: var(--amber);
+    color: var(--espresso);
+    transition: background 0.2s;
+    margin-top: 4px;
+  }
+
+  .a-run-btn:hover { background: var(--gold); }
+
+  .a-loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 28px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(200,121,42,0.6);
+    letter-spacing: 0.06em;
+  }
+
+  .a-loading.vis { display: flex; }
+
+  .a-dots { display: flex; gap: 4px; }
+  .a-dots span {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--amber);
+    animation: aDot 1.2s ease-in-out infinite;
+  }
+  .a-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .a-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes aDot { 0%,100%{opacity:0.2} 50%{opacity:1} }
+
+  .a-results { display: none; }
+  .a-results.vis { display: block; }
+
+  .a-total {
+    text-align: center;
+    padding: 22px 0 18px;
+    border-bottom: 1px solid rgba(200,121,42,0.15);
+    margin-bottom: 18px;
+  }
+
+  .a-total-eyebrow {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(200,121,42,0.5);
+    margin-bottom: 8px;
+  }
+
+  .a-total-num {
+    font-size: 46px;
+    font-weight: normal;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .a-total-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: rgba(245,239,224,0.35);
+  }
+
+  .a-leaks-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(200,121,42,0.5);
+    margin-bottom: 10px;
+  }
+
+  .a-leak {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(200,121,42,0.1);
+  }
+
+  .a-leak:last-of-type { border-bottom: none; margin-bottom: 0; }
+
+  .a-leak-bar {
+    width: 3px;
+    border-radius: 1px;
+    align-self: stretch;
+    min-height: 30px;
+    flex-shrink: 0;
+  }
+
+  .a-leak-body { flex: 1; min-width: 0; }
+
+  .a-leak-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--cream);
+    margin-bottom: 2px;
+  }
+
+  .a-leak-desc {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: rgba(245,239,224,0.4);
+    line-height: 1.6;
+  }
+
+  .a-leak-amt {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--gold);
+    white-space: nowrap;
+    padding-top: 1px;
+  }
+
+  .a-ai-rec {
+    background: rgba(200,121,42,0.07);
+    border-left: 2px solid var(--amber);
+    padding: 14px 16px;
+    margin-top: 16px;
+    font-size: 13px;
+    font-style: italic;
+    color: rgba(245,239,224,0.75);
+    line-height: 1.75;
+  }
+
+  .a-ai-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 8px;
+  }
+
+  .a-cta {
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+    text-decoration: none;
+    padding: 12px;
+    border: 1px solid rgba(200,121,42,0.3);
+    transition: all 0.2s;
+  }
+
+  .a-cta:hover { background: var(--amber); color: var(--espresso); }
+
+  .a-reset {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: rgba(245,239,224,0.25);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: 10px;
+    display: block;
+    letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 860px) {
+    .audit-layout { grid-template-columns: 1fr; gap: 36px; }
+    .audit-section { padding: 70px 22px; }
+    .a-grid { grid-template-columns: 1fr; }
+  }
+
+    0%, 100% { opacity: 0.25; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(1.03); }
+  }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 860px) {
+    nav { padding: 18px 22px; }
+    .nav-links { display: none; }
+    .section, .services-section, .process-section, .analyzer-section, .cta-section { padding: 70px 22px; }
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { height: 280px; }
+    .hero-left { padding: 110px 22px 60px; }
+    .about-grid { grid-template-columns: 1fr; }
+    .about-visual { height: 280px; }
+    .services-grid { grid-template-columns: 1fr; }
+    .service-card-wide { grid-template-columns: 1fr; gap: 16px; padding: 32px 22px; }
+    .process-steps { grid-template-columns: 1fr 1fr; }
+    .process-steps::before { display: none; }
+    .analyzer-grid { grid-template-columns: 1fr; }
+    footer { grid-template-columns: 1fr; padding: 40px 22px; }
+    .footer-bottom { padding: 14px 22px; flex-direction: column; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Ground</a>
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#process">Process</a></li>
+    <li><a href="#analyzer">Tools</a></li>
+    <li><a href="#audit" style="color:var(--amber)">Free Audit</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <p class="hero-eyebrow">AI Consulting for Coffee Shops</p>
+    <h1 class="hero-title">We <em>brew</em><br>intelligence<br>into your<br>café.</h1>
+    <p class="hero-sub">Ground integrates AI tools — from smart ordering to vendor analytics — directly into your coffee shop operations.</p>
+    <a href="#contact" class="hero-cta">Get Started →</a>
+  </div>
+  <div class="hero-right">
+    <div class="hero-art">
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="coffee-glyph">☕</div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num">7</span>
+        <span class="hero-stat-label">AI Modules</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">30%</span>
+        <span class="hero-stat-label">Avg. Cost Reduction</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">∞</span>
+        <span class="hero-stat-label">Scalable</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item">Personalized Ordering</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Forecasting Dashboards</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Staff Scheduling</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">AI Marketing</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Sentiment Analysis</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Menu Optimization</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Personalized Ordering</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Customer Profile Engine</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Forecasting Dashboards</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Staff Scheduling</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">AI Marketing</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Sentiment Analysis</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Menu Optimization</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Revenue Leak Audit</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Vendor Negotiation</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Personalized Ordering</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Customer Profile Engine</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Forecasting Dashboards</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Staff Scheduling</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">AI Marketing</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Sentiment Analysis</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Menu Optimization</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Revenue Leak Audit</span><span class="marquee-dot"> · </span>
+    <span class="marquee-item">Vendor Negotiation</span><span class="marquee-dot"> · </span>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section class="section">
+  <div class="about-grid">
+    <div class="about-visual">
+      <div class="about-main-card">
+        <div class="about-big-text">AI</div>
+        <p class="about-card-body">Real tools. Real implementation. Tailored to your shop floor — not a generic software subscription.</p>
+      </div>
+      <div class="about-float">
+        <div class="about-float-title">Built<br>to<br>Scale</div>
+        <div class="about-float-sub">Efficiency &amp; profit</div>
+      </div>
+    </div>
+    <div>
+      <span class="section-tag">About Ground</span>
+      <h2 class="section-title">Run smarter.<br>Grow <em>faster.</em></h2>
+      <p class="section-body" style="margin-bottom: 24px;">Great coffee shops are already doing the hard part — crafting an experience worth coming back to. Ground handles the operational intelligence layer, so your team spends less time on guesswork and more time on what matters.</p>
+      <p class="section-body">We build custom AI solutions, integrate them into your existing workflow, and train your team to use them confidently — turning data you already have into decisions that drive profit.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="services-section" id="services">
+  <span class="section-tag">What We Build</span>
+  <h2 class="section-title" style="color: var(--cream);">Seven tools.<br>One <em>ecosystem.</em></h2>
+
+  <div class="services-grid">
+    <div class="service-card" style="border: 1px solid rgba(200,121,42,0.35); position:relative;">
+      <div style="position:absolute;top:16px;right:16px;font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;background:var(--amber);color:var(--espresso);padding:3px 8px;">New</div>
+      <div class="service-num">01</div>
+      <span class="service-icon">💬</span>
+      <h3 class="service-name">Ordering AI &amp; Customer Profile Engine</h3>
+      <p class="service-desc">A chat assistant on your website or via QR code that guides customers through your menu — and builds a profile on every returning guest behind the scenes.</p>
+      <div style="margin-top:18px;border-top:1px solid rgba(200,121,42,0.15);padding-top:16px;">
+        <p style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;">What it tracks</p>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="display:flex;align-items:flex-start;gap:8px;font-family:var(--mono);font-size:10px;line-height:1.6;color:rgba(245,239,224,0.5);">
+            <span style="color:var(--amber);flex-shrink:0;">→</span>
+            <span>Remembers drink preferences &amp; modifications per customer</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;font-family:var(--mono);font-size:10px;line-height:1.6;color:rgba(245,239,224,0.5);">
+            <span style="color:var(--amber);flex-shrink:0;">→</span>
+            <span>Tracks visit frequency &amp; lifetime value per guest</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;font-family:var(--mono);font-size:10px;line-height:1.6;color:rgba(245,239,224,0.5);">
+            <span style="color:var(--amber);flex-shrink:0;">→</span>
+            <span>Triggers targeted offers automatically — free pastry after 5 visits, birthday discounts, lapsed-customer win-backs</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;font-family:var(--mono);font-size:10px;line-height:1.6;color:rgba(245,239,224,0.5);">
+            <span style="color:var(--amber);flex-shrink:0;">→</span>
+            <span>Integrates with SMS &amp; email for personalized outreach — no app download required</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="service-tag">Customer-Facing</span>
+        <span class="service-tag" style="color:var(--gold);border-color:rgba(232,169,74,0.35);">Loyalty Engine</span>
+      </div>
+      <div style="margin-top:14px;font-family:var(--mono);font-size:10px;color:rgba(200,121,42,0.7);border-top:1px solid rgba(200,121,42,0.12);padding-top:12px;">↑ 8–15% avg ticket size · Drives repeat visits</div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">02</div>
+      <span class="service-icon">📊</span>
+      <h3 class="service-name">Forecasting Dashboard</h3>
+      <p class="service-desc">A live dashboard predicting busy hours, staffing needs, and supply usage — so you're always prepped, never over-ordered, never short-staffed.</p>
+      <span class="service-tag">Operations</span>
+    </div>
+    <div class="service-card">
+      <div class="service-num">03</div>
+      <span class="service-icon">🗓️</span>
+      <h3 class="service-name">Smart Staff Scheduling</h3>
+      <p class="service-desc">AI-assisted scheduling built around forecasted traffic, employee availability, and labor costs — delivered in a simple format your team already knows.</p>
+      <span class="service-tag">HR &amp; Ops</span>
+    </div>
+    <div class="service-card">
+      <div class="service-num">04</div>
+      <span class="service-icon">🎨</span>
+      <h3 class="service-name">AI-Generated Marketing</h3>
+      <p class="service-desc">On-brand social content, promotional visuals, and email campaigns — generated automatically and matched to your shop's voice and aesthetic.</p>
+      <span class="service-tag">Marketing</span>
+    </div>
+    <div class="service-card">
+      <div class="service-num">05</div>
+      <span class="service-icon">⭐</span>
+      <h3 class="service-name">Sentiment Analysis</h3>
+      <p class="service-desc">Continuously scans Google, Yelp, and social media to surface recurring complaints, trending praise, and actionable feedback in real time.</p>
+      <span class="service-tag">Reputation</span>
+    </div>
+    <div class="service-card">
+      <div class="service-num">06</div>
+      <span class="service-icon">☕</span>
+      <h3 class="service-name">Menu Optimization</h3>
+      <p class="service-desc">Analyzes sales data to identify your most profitable items, flags slow movers, and suggests pricing changes that increase average ticket size.</p>
+      <span class="service-tag">Revenue</span>
+    </div>
+  </div>
+
+  <div class="service-card-wide">
+    <div>
+      <div class="service-num">07</div>
+      <span class="service-icon" style="font-size: 36px;">📄</span>
+    </div>
+    <div>
+      <h3 class="service-name">Vendor Contract Analyzer</h3>
+      <p class="service-desc" style="max-width: 560px;">Upload any supplier invoice or contract. Our AI flags red flags, hidden fees, unfair terms, and missed negotiation opportunities — so you walk into every vendor meeting with leverage.</p>
+    </div>
+    <span class="service-tag" style="align-self: flex-end;">Procurement</span>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="process-section" id="process">
+  <span class="section-tag">Our Process</span>
+  <h2 class="section-title">From audit to<br><em>live</em> in weeks.</h2>
+  <div class="process-steps">
+    <div>
+      <div class="step-num">1</div>
+      <h3 class="step-title">Discovery Audit</h3>
+      <p class="step-body">We map your current operations, pain points, and data sources. No jargon — just an honest look at where AI actually helps.</p>
+    </div>
+    <div>
+      <div class="step-num">2</div>
+      <h3 class="step-title">Custom Blueprint</h3>
+      <p class="step-body">We design a tailored stack of AI tools — only the ones that fit your shop size, budget, and workflow. No bloat.</p>
+    </div>
+    <div>
+      <div class="step-num">3</div>
+      <h3 class="step-title">Build &amp; Integrate</h3>
+      <p class="step-body">We build, configure, and deploy. Connects to your POS, scheduling tools, and social accounts. We handle the technical side completely.</p>
+    </div>
+    <div>
+      <div class="step-num">4</div>
+      <h3 class="step-title">Train &amp; Support</h3>
+      <p class="step-body">We train your staff, document every workflow, and stay on call. Ongoing support keeps everything running as your shop grows.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ANALYZER FEATURE -->
+<section class="analyzer-section" id="analyzer">
+  <div class="analyzer-grid">
+    <div>
+      <span class="section-tag">Featured Tool</span>
+      <h2 class="section-title">Vendor Contract<br><em>Intelligence</em></h2>
+      <p class="section-body" style="margin-bottom: 24px;">Most coffee shop owners sign vendor contracts without legal review. Our contract analyzer reads every clause, flags every risk, and generates a full report in under 30 seconds.</p>
+      <p class="section-body" style="margin-bottom: 38px;">Catch hidden auto-renewals, one-sided liability clauses, vague pricing language, and missing protections before you sign anything.</p>
+      <a href="#contact" class="btn-primary">Request a Demo →</a>
+    </div>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="t-dot"></div>
+        <div class="t-dot"></div>
+        <div class="t-dot"></div>
+        <span class="t-title">ground_analyzer — vendor_agreement.pdf</span>
+      </div>
+      <div class="terminal-body">
+        <div class="t-row"><span class="t-key">document_type</span><span class="t-val">Supplier Agreement</span></div>
+        <div class="t-row"><span class="t-key">overall_risk</span><span><span class="t-risk">HIGH</span></span></div>
+        <div class="t-row"><span class="t-key">effective_date</span><span class="t-val">January 1, 2025</span></div>
+        <div class="t-row"><span class="t-key">expiration_date</span><span class="t-val">Not Specified ⚠️</span></div>
+        <p class="t-head">— Flaws Identified (4) —</p>
+        <div class="t-flaw">
+          <div class="t-flaw-title">[HIGH] Intellectual Property</div>
+          <div class="t-flaw-note">Work product belongs to vendor, not your shop.</div>
+        </div>
+        <div class="t-flaw">
+          <div class="t-flaw-title">[HIGH] Payment Terms</div>
+          <div class="t-flaw-note">Extra expenses billed at vendor's discretion — no cap.</div>
+        </div>
+        <div class="t-flaw">
+          <div class="t-flaw-title">[MEDIUM] Confidentiality</div>
+          <div class="t-flaw-note">"For a period of time" is legally unenforceable.</div>
+        </div>
+        <div class="t-flaw">
+          <div class="t-flaw-title">[MEDIUM] Termination</div>
+          <div class="t-flaw-note">Notice period undefined. Payment owed on exit with no limit.</div>
+        </div>
+        <p class="t-head">— Top Recommendation —</p>
+        <p class="t-rec">Renegotiate IP clause. Add payment cap. Define confidentiality term. Do not sign as written.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVENUE LEAK AUDIT -->
+<section class="audit-section" id="audit">
+  <span class="section-tag">Start here — free</span>
+  <h2 class="section-title">Find your revenue leaks<br>in <em>90 seconds.</em></h2>
+
+  <div class="audit-layout">
+    <div>
+      <p class="section-body">Most independent coffee shops lose $2,000–$6,000 per month to fixable inefficiencies. This audit finds yours against real industry benchmarks — then shows you exactly which Ground modules plug each gap.</p>
+      <div class="audit-pitch-points">
+        <div class="audit-pitch-point">Free — no signup, no commitment required</div>
+        <div class="audit-pitch-point">Results in under 2 minutes, powered by live AI analysis</div>
+        <div class="audit-pitch-point">Every leak maps directly to a specific Ground solution</div>
+        <div class="audit-pitch-point">Average shop uncovers $3,800/month in identified losses</div>
+        <div class="audit-pitch-point">10% labor cost reduction or you don't pay — guaranteed</div>
+      </div>
+      <a href="revenue_leak_audit.html" class="btn-primary" style="display:inline-block">Open Full Audit Page →</a>
+    </div>
+
+    <div class="audit-card">
+      <div class="audit-card-header">
+        <div class="audit-header-dot"></div>
+        <span class="audit-header-title">Ground AI · Revenue Leak Audit</span>
+      </div>
+      <div class="audit-body">
+
+        <div id="ws-form">
+          <div class="a-sec">
+            <div class="a-sec-label">Shop basics</div>
+            <div class="a-grid">
+              <div class="a-field"><label>Monthly revenue ($)</label><input type="number" id="ws-rev" placeholder="28000" /></div>
+              <div class="a-field"><label>Avg ticket size ($)</label><input type="number" id="ws-ticket" placeholder="6.50" step="0.01" /></div>
+            </div>
+            <div class="a-grid">
+              <div class="a-field"><label>Monthly labor cost ($)</label><input type="number" id="ws-labor" placeholder="9000" /></div>
+              <div class="a-field"><label>Monthly supply cost ($)</label><input type="number" id="ws-supply" placeholder="7000" /></div>
+            </div>
+          </div>
+          <div class="a-sec">
+            <div class="a-sec-label">Operations</div>
+            <div class="a-grid">
+              <div class="a-field"><label>Daily customer count</label><input type="number" id="ws-customers" placeholder="150" /></div>
+              <div class="a-field"><label>Google / Yelp rating</label>
+                <select id="ws-rating">
+                  <option value="4.5">4.5+ stars</option>
+                  <option value="4.0" selected>4.0–4.4 stars</option>
+                  <option value="3.5">3.5–3.9 stars</option>
+                  <option value="3.0">Below 3.5</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="a-sec">
+            <div class="a-sec-label">Pain points — check all that apply</div>
+            <div class="a-checks">
+              <label class="a-check"><input type="checkbox" id="ws-menu" /> Menu not reviewed or updated in 6+ months</label>
+              <label class="a-check"><input type="checkbox" id="ws-labor-c" /> Over- or under-staffing shifts regularly</label>
+              <label class="a-check"><input type="checkbox" id="ws-vendor" /> Haven't renegotiated vendor contracts recently</label>
+              <label class="a-check"><input type="checkbox" id="ws-upsell" /> Staff rarely upsell or suggest add-ons</label>
+              <label class="a-check"><input type="checkbox" id="ws-reviews" /> Not tracking or responding to reviews consistently</label>
+              <label class="a-check"><input type="checkbox" id="ws-waste" /> Throwing out food or supplies at end of week</label>
+            </div>
+          </div>
+          <button class="a-run-btn" onclick="wsRunAudit()">Calculate My Revenue Leaks →</button>
+        </div>
+
+        <div id="ws-loading" class="a-loading">
+          <div class="a-dots"><span></span><span></span><span></span></div>
+          <span>Calculating against benchmarks...</span>
+        </div>
+
+        <div id="ws-results" class="a-results">
+          <div class="a-total">
+            <div class="a-total-eyebrow">Estimated monthly revenue leak</div>
+            <div class="a-total-num" id="ws-total-num">$0</div>
+            <div class="a-total-sub" id="ws-total-sub"></div>
+          </div>
+          <div class="a-leaks-label">Where the money is going</div>
+          <div id="ws-leak-list"></div>
+          <div style="margin-top:16px;">
+            <div class="a-ai-label">Ground AI · Priority recommendation</div>
+            <div class="a-ai-rec" id="ws-ai-rec"><span style="font-family:var(--mono);font-size:10px;color:rgba(200,121,42,0.6);">Generating your action plan...</span></div>
+          </div>
+          <a href="revenue_leak_audit.html" class="a-cta">View Full Audit Report →</a>
+          <button class="a-reset" onclick="wsReset()">← Start over</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section class="quote-section">
+  <p class="big-quote">"The best coffee shops in the next decade won't just have the best beans — they'll have the <em>best data.</em>"</p>
+  <p class="quote-attr">— The Ground Philosophy</p>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <span class="section-tag" style="display:block; text-align:center;">Work with Ground</span>
+  <h2 class="section-title">Ready to bring AI<br>into your <em>shop?</em></h2>
+  <p class="section-body">Book a free 30-minute discovery call. We'll walk through your operations and tell you exactly which tools would help — no pitch, no pressure.</p>
+  <div class="btn-row">
+    <a href="mailto:hello@groundai.co" class="btn-primary">Book a Free Call →</a>
+    <a href="#services" class="btn-outline">See All Services</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="footer-logo">Ground</div>
+    <div class="footer-tagline">AI Consulting for Coffee Shops</div>
+  </div>
+  <div>
+    <p class="footer-col-title">Services</p>
+    <ul class="footer-links">
+      <li><a href="#services">Ordering AI</a></li>
+      <li><a href="#services">Customer Profile Engine</a></li>
+      <li><a href="#services">Forecasting</a></li>
+      <li><a href="#services">Scheduling</a></li>
+      <li><a href="#services">Marketing</a></li>
+      <li><a href="#services">Sentiment Analysis</a></li>
+      <li><a href="#services">Menu Optimization</a></li>
+      <li><a href="#services">Contract Analyzer</a></li>
+      <li><a href="#audit" style="color:var(--gold)">Free Revenue Audit</a></li>
+    </ul>
+  </div>
+  <div>
+    <p class="footer-col-title">Company</p>
+    <ul class="footer-links">
+      <li><a href="#">About</a></li>
+      <li><a href="#process">Process</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </div>
+</footer>
+<div class="footer-bottom">
+  <span class="footer-fine">© 2025 Ground. AI Consulting for Independent Coffee Shops.</span>
+  <span class="footer-fine">This site does not constitute legal or financial advice.</span>
+</div>
+
+<script>
+function wsF(n) { return '$' + Math.round(n).toLocaleString(); }
+
+function wsRunAudit() {
+  const rev      = parseFloat(document.getElementById('ws-rev').value)      || 28000;
+  const ticket   = parseFloat(document.getElementById('ws-ticket').value)   || 6.50;
+  const labor    = parseFloat(document.getElementById('ws-labor').value)    || 9000;
+  const supply   = parseFloat(document.getElementById('ws-supply').value)   || 7000;
+  const customers= parseFloat(document.getElementById('ws-customers').value)|| 150;
+  const rating   = parseFloat(document.getElementById('ws-rating').value);
+  const chkMenu  = document.getElementById('ws-menu').checked;
+  const chkLabor = document.getElementById('ws-labor-c').checked;
+  const chkVendor= document.getElementById('ws-vendor').checked;
+  const chkUpsell= document.getElementById('ws-upsell').checked;
+  const chkReviews=document.getElementById('ws-reviews').checked;
+  const chkWaste = document.getElementById('ws-waste').checked;
+
+  document.getElementById('ws-form').style.display = 'none';
+  document.getElementById('ws-loading').classList.add('vis');
+
+  setTimeout(() => {
+    const leaks = [];
+    if (chkUpsell || ticket < 7) leaks.push({ t: 'Missed upsells & low avg ticket', d: 'AI ordering closes 8–15% of this gap at your volume.', a: rev * 0.10, s: 'high' });
+    if (chkLabor)                leaks.push({ t: 'Labor scheduling inefficiency',   d: 'Demand-based scheduling cuts 8–12% of labor spend.', a: labor * 0.10, s: 'high' });
+    if (chkMenu)                 leaks.push({ t: 'Underperforming menu items',      d: 'Menu optimization recovers 5–8% of total revenue.', a: rev * 0.06, s: 'med' });
+    if (chkVendor)               leaks.push({ t: 'Vendor contract overpayment',     d: 'Contract analysis saves 10–15% on flagged invoices.', a: supply * 0.12, s: 'med' });
+    if (chkWaste)                leaks.push({ t: 'Food & supply waste',             d: 'Forecasting cuts waste by 6–10% of supply spend.', a: supply * 0.08, s: 'med' });
+    if (chkReviews || rating <= 3.9) leaks.push({ t: rating < 4.0 ? 'Below-benchmark rating suppressing traffic' : 'Inconsistent review engagement', d: rating < 4.0 ? 'Sub-4.0 rating suppresses new customer acquisition 15–20%.' : 'Active review engagement measurably lifts referrals.', a: customers * 0.05 * ticket * 30, s: rating < 4.0 ? 'high' : 'low' });
+    if (leaks.length === 0) leaks.push({ t: 'Baseline efficiency gap', d: 'Top-quartile shops run 5–8% tighter. Data ops closes this.', a: rev * 0.06, s: 'low' });
+    leaks.sort((a,b) => b.a - a.a);
+    const total = leaks.reduce((s,l) => s + l.a, 0);
+
+    document.getElementById('ws-total-num').textContent = wsF(total);
+    document.getElementById('ws-total-sub').textContent = wsF(total * 12) + ' annually · vs. industry benchmarks';
+
+    const list = document.getElementById('ws-leak-list');
+    list.innerHTML = '';
+    const cols = { high: '#c0392b', med: 'var(--amber)', low: '#27ae60' };
+    leaks.forEach(l => {
+      list.innerHTML += `<div class="a-leak"><div class="a-leak-bar" style="background:${cols[l.s]}"></div><div class="a-leak-body"><div class="a-leak-title">${l.t}</div><div class="a-leak-desc">${l.d}</div></div><div class="a-leak-amt">${wsF(l.a)}/mo</div></div>`;
+    });
+
+    document.getElementById('ws-loading').classList.remove('vis');
+    document.getElementById('ws-results').classList.add('vis');
+
+    const prompt = `You are Ground, an AI consulting firm for independent coffee shops. A shop just ran a quick revenue leak audit on our website.
+Monthly revenue: $${Math.round(rev).toLocaleString()}, avg ticket: $${ticket.toFixed(2)}, labor: $${Math.round(labor).toLocaleString()}/mo, supplies: $${Math.round(supply).toLocaleString()}/mo, daily customers: ${Math.round(customers)}, rating: ${rating} stars.
+Total monthly leak: ${wsF(total)}.
+Top leaks: ${leaks.slice(0,3).map(l => l.t + ': ' + wsF(l.a) + '/mo').join('; ')}.
+Write exactly 2 sentences. Name the single highest-leverage action first with a specific dollar figure. Second sentence: what Ground would implement first and in what timeframe. Plain language, no jargon, no bullet points.`;
+
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+    })
+    .then(r => r.json())
+    .then(data => {
+      const text = data.content && data.content[0] && data.content[0].text;
+      document.getElementById('ws-ai-rec').textContent = text || 'Start with the top item above — it\'s your fastest path to recovered revenue. Ground typically has this fixed within 30 days of engagement.';
+    })
+    .catch(() => {
+      document.getElementById('ws-ai-rec').textContent = 'Start with the top item above — it\'s your fastest path to recovered revenue.';
+    });
+  }, 1000);
+}
+
+function wsReset() {
+  document.getElementById('ws-results').classList.remove('vis');
+  document.getElementById('ws-loading').classList.remove('vis');
+  document.getElementById('ws-form').style.display = 'block';
+  document.getElementById('ws-ai-rec').innerHTML = '<span style="font-family:var(--mono);font-size:10px;color:rgba(200,121,42,0.6);">Generating your action plan...</span>';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ground — Customer Profile Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f8f5ef;
+  --surface: #fffdf9;
+  --surface2: #f1ece2;
+  --border: rgba(23,18,13,0.1);
+  --border-med: rgba(23,18,13,0.2);
+  --espresso: #17120d;
+  --brown: #2a1c14;
+  --text-primary: #17120d;
+  --text-secondary: #6f655b;
+  --text-muted: #8c8174;
+  --accent: #a84f21;
+  --accent-dark: #7a3815;
+  --accent-light: #f3e3d8;
+  --accent-mid: #c98a5e;
+  --gold: #d99b35;
+  --green: #536b54;
+  --green-light: #e7ece6;
+  --amber: #d99b35;
+  --amber-light: #faf0dc;
+  --red: #b3261e;
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-mono: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-mono);
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  grid-template-rows: auto 56px 1fr auto;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  grid-column: 1 / -1;
+  background: var(--espresso);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  border-bottom: 1px solid rgba(200,121,42,0.2);
+}
+
+.topbar-logo {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.topbar-title {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: rgba(200,121,42,0.55);
+  text-transform: uppercase;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 10px;
+  color: rgba(245,239,224,0.3);
+  letter-spacing: 0.08em;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+@keyframes livePulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--espresso);
+  border-right: 1px solid rgba(200,121,42,0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-search {
+  padding: 16px;
+  border-bottom: 1px solid rgba(200,121,42,0.1);
+}
+
+.search-box {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(200,121,42,0.2);
+  padding: 9px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(245,239,224,0.7);
+  letter-spacing: 0.04em;
+}
+
+.search-box::placeholder { color: rgba(245,239,224,0.2); }
+.search-box:focus { outline: none; border-color: rgba(200,121,42,0.5); }
+
+.sidebar-label {
+  padding: 12px 16px 8px;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(200,121,42,0.45);
+}
+
+.customer-list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200,121,42,0.2) transparent;
+}
+
+.customer-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+
+.customer-item:hover { background: rgba(255,255,255,0.03); }
+.customer-item.active {
+  background: rgba(200,121,42,0.08);
+  border-left-color: var(--accent);
+}
+
+.c-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brown), var(--accent-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--gold);
+  font-family: var(--font-serif);
+  font-style: italic;
+  flex-shrink: 0;
+  border: 1px solid rgba(200,121,42,0.2);
+}
+
+.c-info { flex: 1; min-width: 0; }
+
+.c-name {
+  font-size: 12px;
+  color: rgba(245,239,224,0.85);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.c-last {
+  font-size: 10px;
+  color: rgba(245,239,224,0.3);
+  margin-top: 2px;
+}
+
+.c-tier {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tier-gold { background: var(--gold); }
+.tier-silver { background: #A0A0A0; }
+.tier-new { background: rgba(200,121,42,0.4); }
+
+/* ── MAIN PANEL ── */
+.main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Profile header */
+.profile-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 24px 28px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.profile-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brown), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: var(--gold);
+  font-family: var(--font-serif);
+  font-style: italic;
+  flex-shrink: 0;
+  border: 2px solid var(--accent-mid);
+}
+
+.profile-meta { flex: 1; }
+
+.profile-name {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.profile-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.profile-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.ptag {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 2px;
+}
+
+.ptag-gold { background: rgba(232,169,74,0.15); color: var(--gold); border: 1px solid rgba(232,169,74,0.3); }
+.ptag-green { background: var(--green-light); color: var(--green); border: 1px solid rgba(45,122,79,0.3); }
+.ptag-amber { background: var(--amber-light); color: var(--amber); border: 1px solid rgba(196,122,26,0.3); }
+.ptag-muted { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border-med); }
+
+.profile-stats {
+  display: flex;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.pstat { text-align: right; }
+
+.pstat-num {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.pstat-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* Chat + Profile grid */
+.content-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  overflow: hidden;
+}
+
+/* ── CHAT ── */
+.chat-pane {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(23,18,13,0.15) transparent;
+}
+
+.msg {
+  display: flex;
+  gap: 10px;
+  max-width: 85%;
+}
+
+.msg.user { flex-direction: row-reverse; align-self: flex-end; }
+
+.msg-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.msg.bot .msg-avatar { background: var(--espresso); color: var(--gold); border: 1px solid rgba(200,121,42,0.3); }
+.msg.user .msg-avatar { background: var(--accent); color: #fff; font-family: var(--font-serif); font-style: italic; }
+
+.msg-bubble {
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+}
+
+.msg.bot .msg-bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 2px 12px 12px 12px;
+}
+
+.msg.user .msg-bubble {
+  background: var(--espresso);
+  color: rgba(245,239,224,0.85);
+  border-radius: 12px 2px 12px 12px;
+}
+
+.msg-time {
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.msg.bot .msg-time { text-align: left; }
+
+/* Offer card inside chat */
+.offer-card {
+  background: linear-gradient(135deg, var(--espresso), var(--brown));
+  border: 1px solid rgba(200,121,42,0.25);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 6px;
+}
+
+.offer-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.offer-label::before {
+  content: '✦';
+  font-size: 8px;
+}
+
+.offer-title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(245,239,224,0.9);
+  margin-bottom: 4px;
+}
+
+.offer-sub {
+  font-size: 10px;
+  color: rgba(245,239,224,0.45);
+  line-height: 1.6;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  gap: 10px;
+  max-width: 85%;
+}
+
+.typing-dots {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px 12px 12px 12px;
+  padding: 12px 16px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.typing-dots span {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: typeDot 1.2s ease-in-out infinite;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typeDot { 0%,100%{opacity:0.2;transform:scale(1)} 50%{opacity:1;transform:scale(1.2)} }
+
+/* Chat input */
+.chat-input-wrap {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.chat-input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  resize: none;
+  min-height: 40px;
+  max-height: 100px;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  border-radius: 4px;
+}
+
+.chat-input:focus { outline: none; border-color: var(--accent-mid); }
+.chat-input::placeholder { color: var(--text-muted); }
+
+.send-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 4px;
+  height: 40px;
+  white-space: nowrap;
+}
+
+.send-btn:hover { background: var(--accent-dark); }
+.send-btn:disabled { background: var(--surface2); color: var(--text-muted); cursor: not-allowed; }
+
+/* ── PROFILE DETAIL PANEL ── */
+.detail-pane {
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(23,18,13,0.15) transparent;
+}
+
+.detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.detail-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pref-tag {
+  display: inline-block;
+  background: var(--accent-light);
+  border: 1px solid var(--accent-mid);
+  color: var(--accent);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin: 3px;
+  letter-spacing: 0.04em;
+}
+
+.visit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.visit-row:last-child { border-bottom: none; }
+
+.visit-item { color: var(--text-primary); }
+.visit-date { color: var(--text-muted); font-size: 10px; }
+.visit-amt { color: var(--accent); font-weight: 500; }
+
+.ltv-bar-track {
+  background: var(--surface2);
+  border-radius: 2px;
+  height: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.ltv-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--accent), var(--gold));
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-row:last-child { border-bottom: none; }
+.stat-key { color: var(--text-secondary); }
+.stat-val { color: var(--text-primary); font-weight: 400; }
+
+.trigger-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.trigger-row:last-child { border-bottom: none; }
+
+.trigger-status {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.t-fired { background: var(--green); }
+.t-pending { background: var(--amber); }
+.t-upcoming { background: rgba(100,100,100,0.4); }
+
+.trigger-name { flex: 1; color: var(--text-primary); }
+.trigger-meta { font-size: 10px; color: var(--text-muted); }
+
+/* New customer input */
+.new-customer-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.nc-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.nc-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 3px;
+}
+
+.nc-input:focus { outline: none; border-color: var(--accent-mid); }
+
+.nc-btn {
+  width: 100%;
+  background: var(--espresso);
+  color: var(--gold);
+  border: none;
+  padding: 9px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 3px;
+}
+
+.nc-btn:hover { background: var(--accent); color: #fff; }
+
+/* Empty state */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  gap: 10px;
+  padding: 40px;
+  text-align: center;
+}
+
+.empty-icon { font-size: 36px; opacity: 0.3; }
+.empty-text { font-size: 12px; line-height: 1.7; }
+
+@media (max-width: 900px) {
+  body { grid-template-columns: 1fr; grid-template-rows: auto 56px auto 1fr auto; }
+  .sidebar { max-height: 200px; border-right: none; border-bottom: 1px solid rgba(200,121,42,0.12); }
+  .content-grid { grid-template-columns: 1fr; }
+  .detail-pane { display: none; }
+}
+
+/* ── Ground shared site nav (injected) ── */
+.gnd-header{position:static;grid-column:1 / -1;grid-row:1;z-index:200;background:rgba(248,245,239,0.95);backdrop-filter:blur(14px);border-bottom:1px solid #ddd4c8;font-family:'Inter',ui-sans-serif,system-ui,sans-serif;}
+.gnd-footer{grid-column:1 / -1;grid-row:4;}
+.gnd-wrap{width:min(1120px, calc(100% - 40px));margin:0 auto;}
+.gnd-nav{min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:18px;}
+.gnd-brand{font-weight:800;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:#17120d;font-size:14px;flex-shrink:0;}
+.gnd-nav-links{display:flex;align-items:center;gap:16px;font-size:13px;color:#6f655b;flex-wrap:wrap;}
+.gnd-nav-links a{text-decoration:none;color:#6f655b;white-space:nowrap;}
+.gnd-nav-links a:hover{color:#17120d;}
+.gnd-nav-links a.gnd-active{color:#a84f21;font-weight:600;}
+.gnd-cta{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 14px;border-radius:6px;background:#17120d;color:#fffdf9;text-decoration:none;font-weight:700;font-size:12px;font-family:'Inter',sans-serif;white-space:nowrap;flex-shrink:0;}
+.gnd-footer{border-top:1px solid #ddd4c8;padding:22px 0;font-family:'Inter',ui-sans-serif,system-ui,sans-serif;color:#6f655b;font-size:12px;background:#f8f5ef;}
+.gnd-footer-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.gnd-footer a{color:#6f655b;}
+@media(max-width:760px){.gnd-nav-links{display:none;}}
+</style>
+</head>
+<body>
+<header class="gnd-header"><nav class="gnd-nav gnd-wrap">
+<a href="../index.html" class="gnd-brand">Ground</a>
+<div class="gnd-nav-links"><a href="../index.html#capabilities">Capabilities</a><a href="../index.html#demos">All demos</a><a href="ground_dashboard.html">Dashboard</a><a href="revenue_leak_audit.html">Revenue audit</a><a href="ground_customer_engine.html" class="gnd-active">Customers</a><a href="comma_cafe_sentiment_report.html">Sentiment</a></div>
+<a class="gnd-cta" href="mailto:hello@groundai.co">Book a call</a>
+</nav></header>
+
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">Ground</div>
+  <div class="topbar-title">Customer Profile Engine</div>
+  <div class="topbar-right">
+    <div class="live-dot"></div>
+    <span>Live · Oakwood Café</span>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-search">
+    <input type="text" class="search-box" placeholder="Search customers..." oninput="filterCustomers(this.value)" />
+  </div>
+  <div class="sidebar-label">Customers (6)</div>
+  <div class="customer-list" id="customer-list"></div>
+
+  <div style="padding: 14px 16px; border-top: 1px solid rgba(200,121,42,0.1);">
+    <div class="nc-label">Add New Customer</div>
+    <input type="text" class="nc-input" id="new-name" placeholder="Full name" />
+    <input type="text" class="nc-input" id="new-phone" placeholder="Phone / email" />
+    <button class="nc-btn" onclick="addCustomer()">+ Register Customer</button>
+  </div>
+</div>
+
+<!-- MAIN PANEL -->
+<div class="main" id="main-panel">
+  <div class="empty-state" id="empty-state">
+    <div class="empty-icon">☕</div>
+    <div class="empty-text">Select a customer to view their profile<br>and start a conversation</div>
+  </div>
+
+  <div id="active-profile" style="display:none; flex:1; display:none; flex-direction:column; overflow:hidden;">
+    <!-- Profile header -->
+    <div class="profile-header">
+      <div class="profile-avatar" id="p-avatar">M</div>
+      <div class="profile-meta">
+        <div class="profile-name" id="p-name">Name</div>
+        <div class="profile-sub" id="p-sub">Member since · Last visit</div>
+        <div class="profile-tags" id="p-tags"></div>
+      </div>
+      <div class="profile-stats">
+        <div class="pstat">
+          <div class="pstat-num" id="p-ltv">$0</div>
+          <div class="pstat-label">Lifetime Value</div>
+        </div>
+        <div class="pstat">
+          <div class="pstat-num" id="p-visits">0</div>
+          <div class="pstat-label">Total Visits</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat + Profile Detail -->
+    <div class="content-grid">
+      <!-- Chat pane -->
+      <div class="chat-pane">
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input-wrap">
+          <textarea class="chat-input" id="chat-input" placeholder="Ask the AI about this customer, or simulate a customer message..." rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+
+      <!-- Detail pane -->
+      <div class="detail-pane" id="detail-pane"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const customers = [
+  {
+    id: 1,
+    name: "Maya Chen",
+    initials: "M",
+    phone: "maya@email.com",
+    tier: "gold",
+    memberSince: "March 2024",
+    lastVisit: "Yesterday, 8:14 AM",
+    visits: 47,
+    ltv: 312,
+    avgTicket: 6.64,
+    preferences: ["Oat Latte", "Extra Shot", "No Sugar", "Hot"],
+    avoidances: ["Dairy", "Decaf"],
+    visits_log: [
+      { item: "Oat Latte (double)", date: "Apr 24", amount: 7.50 },
+      { item: "Oat Latte + Croissant", date: "Apr 22", amount: 12.00 },
+      { item: "Iced Oat Latte", date: "Apr 19", amount: 6.50 },
+      { item: "Oat Latte + Muffin", date: "Apr 16", amount: 11.00 },
+      { item: "Double Espresso", date: "Apr 12", amount: 4.50 },
+    ],
+    triggers: [
+      { name: "10th Visit Reward — Free Drink", status: "fired", meta: "Sent Apr 1" },
+      { name: "Birthday Discount (15% off)", status: "pending", meta: "May 3" },
+      { name: "20-Visit Loyalty Badge", status: "pending", meta: "In 3 visits" },
+      { name: "Win-back (30-day lapse)", status: "upcoming", meta: "Not triggered" },
+    ],
+    tags: ["Gold Member", "Dairy-Free", "Morning Regular"],
+    tagTypes: ["ptag-gold", "ptag-amber", "ptag-green"],
+    notes: "Orders within 5 min of opening. Always gets double shot. Tip average: $1.50.",
+    offerEligible: "Free pastry — 5 visits this month",
+  },
+  {
+    id: 2,
+    name: "James Okafor",
+    initials: "J",
+    phone: "james@email.com",
+    tier: "gold",
+    memberSince: "Jan 2024",
+    lastVisit: "Today, 7:52 AM",
+    visits: 63,
+    ltv: 428,
+    avgTicket: 6.79,
+    preferences: ["Cold Brew", "Almond Milk", "Extra Ice", "Granola Bar"],
+    avoidances: ["Hot drinks", "Espresso shots"],
+    visits_log: [
+      { item: "Cold Brew + Granola Bar", date: "Apr 25", amount: 10.00 },
+      { item: "Cold Brew (large)", date: "Apr 23", amount: 6.00 },
+      { item: "Cold Brew + Banana Bread", date: "Apr 21", amount: 9.50 },
+      { item: "Cold Brew", date: "Apr 18", amount: 5.50 },
+      { item: "Iced Almond Latte", date: "Apr 14", amount: 6.50 },
+    ],
+    triggers: [
+      { name: "10th Visit Reward — Free Drink", status: "fired", meta: "Sent Mar 12" },
+      { name: "50-Visit VIP Tier Upgrade", status: "fired", meta: "Sent Apr 5" },
+      { name: "Birthday Discount (15% off)", status: "pending", meta: "Jul 18" },
+      { name: "Monthly heavy-user offer", status: "pending", meta: "Eligible now" },
+    ],
+    tags: ["Gold Member", "VIP", "Cold Brew Devotee"],
+    tagTypes: ["ptag-gold", "ptag-green", "ptag-amber"],
+    notes: "Orders cold brew 90% of the time. Buys food add-on ~3x per week. High LTV — flag if lapse.",
+    offerEligible: "Heavy-user bonus — $2 off next visit",
+  },
+  {
+    id: 3,
+    name: "Priya Nair",
+    initials: "P",
+    phone: "priya@email.com",
+    tier: "silver",
+    memberSince: "Sep 2024",
+    lastVisit: "Apr 20",
+    visits: 18,
+    ltv: 112,
+    avgTicket: 6.22,
+    preferences: ["Chai Latte", "Oat Milk", "Warm"],
+    avoidances: ["Coffee", "Nut milks"],
+    visits_log: [
+      { item: "Chai Latte (oat)", date: "Apr 20", amount: 6.50 },
+      { item: "Chai Latte + Cookie", date: "Apr 12", amount: 9.00 },
+      { item: "Matcha Latte", date: "Apr 8", amount: 6.00 },
+      { item: "Chai Latte", date: "Apr 2", amount: 6.00 },
+      { item: "Hot Chocolate", date: "Mar 28", amount: 5.50 },
+    ],
+    triggers: [
+      { name: "10th Visit Reward — Free Drink", status: "fired", meta: "Sent Feb 14" },
+      { name: "Win-back (30-day lapse)", status: "upcoming", meta: "Triggers Apr 30" },
+      { name: "20-Visit Loyalty Badge", status: "upcoming", meta: "In 2 visits" },
+      { name: "Birthday Discount (15% off)", status: "upcoming", meta: "Dec 3" },
+    ],
+    tags: ["Silver Member", "Tea Drinker", "At-Risk"],
+    tagTypes: ["ptag-muted", "ptag-amber", "ptag-muted"],
+    notes: "Favors non-coffee options. 10-day gap — approaching win-back threshold.",
+    offerEligible: "Win-back: Come back this week — free cookie with any drink",
+  },
+  {
+    id: 4,
+    name: "Carlos Rivera",
+    initials: "C",
+    phone: "carlos@email.com",
+    tier: "silver",
+    memberSince: "Nov 2024",
+    lastVisit: "Apr 23",
+    visits: 12,
+    ltv: 78,
+    avgTicket: 6.50,
+    preferences: ["Cappuccino", "Whole Milk", "Medium"],
+    avoidances: ["Plant milk"],
+    visits_log: [
+      { item: "Cappuccino", date: "Apr 23", amount: 5.50 },
+      { item: "Cappuccino + Muffin", date: "Apr 18", amount: 9.50 },
+      { item: "Cappuccino", date: "Apr 11", amount: 5.50 },
+      { item: "Latte", date: "Apr 5", amount: 6.00 },
+      { item: "Espresso", date: "Mar 30", amount: 3.50 },
+    ],
+    triggers: [
+      { name: "10th Visit Reward — Free Drink", status: "fired", meta: "Sent Apr 18" },
+      { name: "Upsell: suggest pastry pairing", status: "pending", meta: "Active" },
+      { name: "20-Visit Loyalty Badge", status: "upcoming", meta: "In 8 visits" },
+      { name: "Birthday Discount (15% off)", status: "upcoming", meta: "Aug 22" },
+    ],
+    tags: ["Silver Member", "Classic Coffee"],
+    tagTypes: ["ptag-muted", "ptag-green"],
+    notes: "Consistent cappuccino order. Responded well to muffin upsell on Apr 18.",
+    offerEligible: null,
+  },
+  {
+    id: 5,
+    name: "Sofia Oberg",
+    initials: "S",
+    phone: "sofia@email.com",
+    tier: "new",
+    memberSince: "Apr 2025",
+    lastVisit: "Apr 24",
+    visits: 3,
+    ltv: 19,
+    avgTicket: 6.33,
+    preferences: ["Matcha Latte", "Oat Milk"],
+    avoidances: [],
+    visits_log: [
+      { item: "Matcha Latte (oat)", date: "Apr 24", amount: 7.00 },
+      { item: "Matcha Latte", date: "Apr 20", amount: 6.50 },
+      { item: "Iced Matcha", date: "Apr 17", amount: 6.00 },
+    ],
+    triggers: [
+      { name: "Welcome offer — 10% off next visit", status: "fired", meta: "Sent Apr 17" },
+      { name: "5th Visit milestone", status: "upcoming", meta: "In 2 visits" },
+      { name: "10th Visit Reward", status: "upcoming", meta: "In 7 visits" },
+      { name: "Upsell: suggest food pairing", status: "pending", meta: "Active" },
+    ],
+    tags: ["New Customer", "Matcha Lover"],
+    tagTypes: ["ptag-green", "ptag-amber"],
+    notes: "3 visits in 8 days — high engagement for a new customer. Suggest loyalty card.",
+    offerEligible: "New customer: snack pairing discount",
+  },
+  {
+    id: 6,
+    name: "David Kim",
+    initials: "D",
+    phone: "david@email.com",
+    tier: "gold",
+    memberSince: "Jun 2023",
+    lastVisit: "Mar 28",
+    visits: 89,
+    ltv: 591,
+    avgTicket: 6.64,
+    preferences: ["Drip Coffee", "Black", "Large"],
+    avoidances: ["Milk", "Sweeteners", "Specialty drinks"],
+    visits_log: [
+      { item: "Large Drip Coffee", date: "Mar 28", amount: 4.50 },
+      { item: "Large Drip Coffee", date: "Mar 25", amount: 4.50 },
+      { item: "Large Drip Coffee + Muffin", date: "Mar 20", amount: 8.50 },
+      { item: "Large Drip Coffee", date: "Mar 17", amount: 4.50 },
+      { item: "Large Drip Coffee", date: "Mar 14", amount: 4.50 },
+    ],
+    triggers: [
+      { name: "Win-back (30-day lapse)", status: "pending", meta: "TRIGGERED — 28 days" },
+      { name: "75-Visit VIP Badge", status: "fired", meta: "Sent Jan 10" },
+      { name: "Birthday Discount (15% off)", status: "upcoming", meta: "Sep 5" },
+      { name: "Anniversary — 2 years", status: "upcoming", meta: "Jun 2025" },
+    ],
+    tags: ["Gold Member", "VIP", "Lapsed — 28 days"],
+    tagTypes: ["ptag-gold", "ptag-green", "ptag-muted"],
+    notes: "Highest LTV customer. Lapsed 28 days — unusual. Win-back SMS queued. Bring back ASAP.",
+    offerEligible: "Win-back VIP: Come back — your usual is on us",
+  },
+];
+
+let activeCustomer = null;
+let conversationHistory = {};
+let isLoading = false;
+
+// ── RENDER SIDEBAR ──
+function renderSidebar(list) {
+  const el = document.getElementById('customer-list');
+  el.innerHTML = list.map(c => `
+    <div class="customer-item ${activeCustomer?.id === c.id ? 'active' : ''}" onclick="selectCustomer(${c.id})">
+      <div class="c-avatar">${c.initials}</div>
+      <div class="c-info">
+        <div class="c-name">${c.name}</div>
+        <div class="c-last">${c.lastVisit} · ${c.visits} visits</div>
+      </div>
+      <div class="c-tier tier-${c.tier}"></div>
+    </div>
+  `).join('');
+}
+
+function filterCustomers(q) {
+  const filtered = customers.filter(c => c.name.toLowerCase().includes(q.toLowerCase()));
+  renderSidebar(filtered);
+}
+
+// ── SELECT CUSTOMER ──
+function selectCustomer(id) {
+  activeCustomer = customers.find(c => c.id === id);
+  if (!activeCustomer) return;
+
+  document.getElementById('empty-state').style.display = 'none';
+  const ap = document.getElementById('active-profile');
+  ap.style.display = 'flex';
+  ap.style.flexDirection = 'column';
+  ap.style.overflow = 'hidden';
+  ap.style.flex = '1';
+
+  // Header
+  document.getElementById('p-avatar').textContent = activeCustomer.initials;
+  document.getElementById('p-name').textContent = activeCustomer.name;
+  document.getElementById('p-sub').textContent = `Member since ${activeCustomer.memberSince} · Last visit: ${activeCustomer.lastVisit}`;
+  document.getElementById('p-ltv').textContent = '$' + activeCustomer.ltv;
+  document.getElementById('p-visits').textContent = activeCustomer.visits;
+
+  const tags = document.getElementById('p-tags');
+  tags.innerHTML = activeCustomer.tags.map((t,i) =>
+    `<span class="ptag ${activeCustomer.tagTypes[i]}">${t}</span>`
+  ).join('');
+
+  // Init conversation history
+  if (!conversationHistory[id]) {
+    conversationHistory[id] = [];
+  }
+
+  // Render chat
+  renderChat();
+
+  // If no history, add welcome message
+  if (conversationHistory[id].length === 0) {
+    const welcome = buildWelcomeMessage(activeCustomer);
+    addBotMessage(welcome);
+    if (activeCustomer.offerEligible) {
+      setTimeout(() => addOfferCard(activeCustomer.offerEligible), 400);
+    }
+  }
+
+  // Render detail pane
+  renderDetailPane();
+  renderSidebar(customers);
+}
+
+function buildWelcomeMessage(c) {
+  const msgs = [
+    `${c.name} is a ${c.tier === 'gold' ? 'Gold tier' : c.tier === 'silver' ? 'Silver tier' : 'new'} customer with ${c.visits} visits and $${c.ltv} in lifetime value. Their go-to is <strong>${c.preferences[0]}</strong>${c.preferences[1] ? ` with ${c.preferences[1]}` : ''}. Last visit: ${c.lastVisit}.`,
+  ];
+  if (c.tier === 'gold' && c.visits > 50) msgs.push(`High-value customer — handle with care. ${c.notes}`);
+  else msgs.push(c.notes);
+  return msgs.join(' ');
+}
+
+function addBotMessage(html) {
+  const id = activeCustomer?.id;
+  if (!id) return;
+  const msg = { role: 'bot', html, time: now() };
+  conversationHistory[id].push(msg);
+  renderChat();
+}
+
+function addOfferCard(offer) {
+  const id = activeCustomer?.id;
+  if (!id) return;
+  const msg = { role: 'offer', offer };
+  conversationHistory[id].push(msg);
+  renderChat();
+}
+
+function now() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderChat() {
+  const id = activeCustomer?.id;
+  const history = conversationHistory[id] || [];
+  const container = document.getElementById('chat-messages');
+
+  container.innerHTML = history.map(m => {
+    if (m.role === 'offer') {
+      return `<div class="offer-card">
+        <div class="offer-label">Eligible Offer</div>
+        <div class="offer-title">${m.offer}</div>
+        <div class="offer-sub">Triggered automatically based on visit milestones</div>
+      </div>`;
+    }
+    if (m.role === 'bot') {
+      return `<div class="msg bot">
+        <div class="msg-avatar">G</div>
+        <div>
+          <div class="msg-bubble">${m.html}</div>
+          <div class="msg-time">${m.time || ''}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="msg user">
+      <div class="msg-avatar">${activeCustomer?.initials || 'U'}</div>
+      <div>
+        <div class="msg-bubble">${m.text}</div>
+        <div class="msg-time">${m.time || ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+  const container = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.id = 'typing';
+  el.className = 'typing-indicator';
+  el.innerHTML = `<div class="msg-avatar" style="background:var(--espresso);color:var(--gold);border:1px solid rgba(200,121,42,0.3);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;">G</div>
+    <div class="typing-dots"><span></span><span></span><span></span></div>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing');
+  if (el) el.remove();
+}
+
+// ── SEND MESSAGE ──
+async function sendMessage() {
+  if (isLoading || !activeCustomer) return;
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const id = activeCustomer.id;
+  conversationHistory[id].push({ role: 'user', text, time: now() });
+  input.value = '';
+  renderChat();
+
+  isLoading = true;
+  document.getElementById('send-btn').disabled = true;
+  showTyping();
+
+  const systemPrompt = `You are the Ground AI Customer Profile Engine — an intelligent assistant built for independent coffee shop owners. You have full access to this customer's profile:
+
+Name: ${activeCustomer.name}
+Tier: ${activeCustomer.tier} (${activeCustomer.visits} visits, $${activeCustomer.ltv} LTV)
+Member since: ${activeCustomer.memberSince}
+Last visit: ${activeCustomer.lastVisit}
+Preferences: ${activeCustomer.preferences.join(', ')}
+Avoidances: ${activeCustomer.avoidances.join(', ') || 'None noted'}
+Recent orders: ${activeCustomer.visits_log.map(v => v.item + ' (' + v.date + ', $' + v.amount + ')').join('; ')}
+Notes: ${activeCustomer.notes}
+Active offer: ${activeCustomer.offerEligible || 'None'}
+Tags: ${activeCustomer.tags.join(', ')}
+
+You help the shop owner understand this customer, suggest personalized offers, answer questions about their behavior, or simulate how to greet/serve them. Be specific, warm, concise, and data-driven. Use actual numbers from the profile. Keep responses under 4 sentences unless detail is needed. Never use bullet points — write in natural prose.`;
+
+  const messages = conversationHistory[id]
+    .filter(m => m.role === 'user' || m.role === 'bot_api')
+    .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.role === 'user' ? m.text : m.text_raw || '' }));
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages
+      })
+    });
+
+    const data = await response.json();
+    const reply = data.content?.[0]?.text || "I couldn't generate a response right now.";
+
+    hideTyping();
+    const msg = { role: 'bot', html: reply.replace(/\n/g, '<br>'), text_raw: reply, time: now() };
+    conversationHistory[id].push(msg);
+    renderChat();
+
+  } catch (err) {
+    hideTyping();
+    addBotMessage("Connection issue — please check your API setup and try again.");
+  }
+
+  isLoading = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+// ── DETAIL PANE ──
+function renderDetailPane() {
+  const c = activeCustomer;
+  const pane = document.getElementById('detail-pane');
+
+  const maxAmt = Math.max(...c.visits_log.map(v => v.amount));
+  const ltvPct = Math.min(100, (c.ltv / 600) * 100);
+
+  pane.innerHTML = `
+    <!-- Preferences -->
+    <div class="detail-card">
+      <div class="detail-label">Drink Preferences</div>
+      <div>${c.preferences.map(p => `<span class="pref-tag">${p}</span>`).join('')}</div>
+      ${c.avoidances.length ? `<div style="margin-top:10px;font-size:10px;color:var(--text-muted);">Avoids: ${c.avoidances.join(', ')}</div>` : ''}
+    </div>
+
+    <!-- LTV -->
+    <div class="detail-card">
+      <div class="detail-label">Lifetime Value</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-family:var(--font-serif);font-size:24px;color:var(--accent);">$${c.ltv}</span>
+        <span style="font-size:10px;color:var(--text-muted);">Avg $${c.avgTicket.toFixed(2)}/visit</span>
+      </div>
+      <div class="ltv-bar-track"><div class="ltv-bar-fill" style="width:${ltvPct}%"></div></div>
+      <div style="margin-top:6px;font-size:10px;color:var(--text-muted);">Tier threshold: $600 Platinum</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="detail-card">
+      <div class="detail-label">Visit Stats</div>
+      <div class="stat-row"><span class="stat-key">Total visits</span><span class="stat-val">${c.visits}</span></div>
+      <div class="stat-row"><span class="stat-key">Member since</span><span class="stat-val">${c.memberSince}</span></div>
+      <div class="stat-row"><span class="stat-key">Last visit</span><span class="stat-val">${c.lastVisit}</span></div>
+      <div class="stat-row"><span class="stat-key">Avg ticket</span><span class="stat-val">$${c.avgTicket.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-key">Tier</span><span class="stat-val" style="text-transform:capitalize;">${c.tier}</span></div>
+    </div>
+
+    <!-- Recent orders -->
+    <div class="detail-card">
+      <div class="detail-label">Recent Orders</div>
+      ${c.visits_log.map(v => `
+        <div class="visit-row">
+          <span class="visit-item">${v.item}</span>
+          <span class="visit-date">${v.date}</span>
+          <span class="visit-amt">$${v.amount.toFixed(2)}</span>
+        </div>`).join('')}
+    </div>
+
+    <!-- Triggers -->
+    <div class="detail-card">
+      <div class="detail-label">Automated Triggers</div>
+      ${c.triggers.map(t => `
+        <div class="trigger-row">
+          <div class="trigger-status ${t.status === 'fired' ? 't-fired' : t.status === 'pending' ? 't-pending' : 't-upcoming'}"></div>
+          <span class="trigger-name">${t.name}</span>
+          <span class="trigger-meta">${t.meta}</span>
+        </div>`).join('')}
+    </div>
+
+    <!-- Notes -->
+    <div class="detail-card">
+      <div class="detail-label">Staff Notes</div>
+      <div style="font-size:11px;color:var(--text-secondary);line-height:1.7;">${c.notes}</div>
+    </div>
+  `;
+}
+
+// ── ADD CUSTOMER ──
+function addCustomer() {
+  const name = document.getElementById('new-name').value.trim();
+  const phone = document.getElementById('new-phone').value.trim();
+  if (!name) return;
+
+  const newC = {
+    id: Date.now(),
+    name,
+    initials: name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),
+    phone: phone || 'Not provided',
+    tier: 'new',
+    memberSince: 'Apr 2026',
+    lastVisit: 'Just registered',
+    visits: 0,
+    ltv: 0,
+    avgTicket: 0,
+    preferences: [],
+    avoidances: [],
+    visits_log: [],
+    triggers: [
+      { name: "Welcome offer — 10% off next visit", status: "pending", meta: "Ready to send" },
+      { name: "5th Visit milestone", status: "upcoming", meta: "In 5 visits" },
+      { name: "10th Visit Reward", status: "upcoming", meta: "In 10 visits" },
+    ],
+    tags: ["New Customer"],
+    tagTypes: ["ptag-green"],
+    notes: "Just registered. No visit history yet.",
+    offerEligible: "Welcome offer — 10% off your first order",
+  };
+
+  customers.unshift(newC);
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-phone').value = '';
+  renderSidebar(customers);
+  selectCustomer(newC.id);
+}
+
+// ── INIT ──
+renderSidebar(customers);
+selectCustomer(1);
+</script>
+<footer class="gnd-footer"><div class="gnd-wrap gnd-footer-row">
+<span>&copy; 2026 Ground AI Consulting &middot; <a href="../index.html">groundai.netlify.app</a></span>
+<span>Prototype tool for demonstration purposes &middot; not legal or financial advice.</span>
+</div></footer>
+</body>
+</html>

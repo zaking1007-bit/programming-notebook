@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The Shawnee Night Quest — The Oklahoma Mystery Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   DESIGN SYSTEM — "Case File After Dark"
+   Concept: a detective's manila dossier lit by a dashboard glow.
+   Signature move: every card is stamped with a monospace CASE ID
+   and a hairline gold rule that "develops" like photo paper.
+   Palette: deep midnight navy surface, muted brass accent,
+   warm bone-white text, single crimson reserved for warnings.
+   ========================================================= */
+:root{
+  --bg:#080b12;
+  --surface:#111826;
+  --surface-2:#18212f;
+  --inset:#0b111b;
+  --brass:#c9a227;
+  --brass-lit:#f0cf5b;
+  --brass-dim:#7d6a22;
+  --glow:rgba(201,162,39,.22);
+  --ink:#f3f1ea;
+  --ink-mute:#98a1b3;
+  --ink-faint:#5b6678;
+  --crimson:#e04b57;
+  --jade:#35a899;
+  --line:rgba(201,162,39,.20);
+  --r-s:8px; --r-m:14px; --r-l:22px;
+  --shadow:0 18px 44px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background-color:var(--bg);
+  /* topographic-ish layered glow + faint survey grid */
+  background-image:
+    radial-gradient(ellipse at 50% -10%, rgba(201,162,39,.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 110%, rgba(53,168,153,.07) 0%, transparent 50%),
+    linear-gradient(rgba(255,255,255,.016) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.016) 1px, transparent 1px);
+  background-size:100% 100%,100% 100%,34px 34px,34px 34px;
+  background-attachment:fixed;
+  color:var(--ink);
+  font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.6;
+  min-height:100vh;
+  padding:14px 14px 70px;
+  display:flex;justify-content:center;
+}
+#shell{width:100%;max-width:700px;display:flex;flex-direction:column;gap:16px}
+
+/* ---------- HUD ---------- */
+.hud{
+  position:sticky;top:10px;z-index:90;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:rgba(17,24,38,.92);backdrop-filter:blur(12px);
+  border:1px solid var(--line);border-radius:var(--r-m);
+  padding:9px 14px;box-shadow:0 6px 20px rgba(0,0,0,.5);
+}
+.hud-group{display:flex;gap:18px}
+.stat{display:flex;flex-direction:column;line-height:1.15}
+.stat b{font-family:'JetBrains Mono',monospace;font-size:.98rem;color:var(--brass-lit);font-weight:700}
+.stat span{font-size:.62rem;text-transform:uppercase;letter-spacing:.14em;color:var(--brass-dim);font-weight:700}
+.hud-btns{display:flex;gap:6px}
+
+/* ---------- Buttons ---------- */
+button,.btn{font-family:inherit}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:50px;padding:13px 20px;border:none;cursor:pointer;
+  border-radius:var(--r-m);font-weight:800;font-size:1rem;letter-spacing:.02em;
+  background:linear-gradient(180deg,var(--brass-lit),var(--brass));
+  color:#0a0e16;text-decoration:none;text-align:center;
+  transition:transform .14s ease,filter .14s ease,box-shadow .14s ease;
+}
+.btn:hover{filter:brightness(1.07)}
+.btn:active{transform:scale(.985)}
+.btn.ghost{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);font-weight:700}
+.btn.ghost:hover{border-color:var(--brass);color:var(--brass-lit);filter:none}
+.btn.map{background:linear-gradient(180deg,#24456e,#16263f);border:1px solid #3f618c;color:#e6eefb}
+.btn.danger{background:transparent;border:1px solid rgba(224,75,87,.55);color:#ff9ea6;font-weight:700;font-size:.88rem;min-height:44px}
+.btn.full{width:100%}
+.btn[disabled],.btn.locked{opacity:.42;cursor:not-allowed;pointer-events:none}
+.mini{
+  background:var(--surface-2);border:1px solid var(--line);color:var(--ink-mute);
+  font-size:.76rem;font-weight:700;padding:7px 11px;border-radius:var(--r-s);cursor:pointer;
+  transition:all .18s;
+}
+.mini:hover{color:var(--brass-lit);border-color:var(--brass)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+:focus-visible{outline:3px solid var(--brass-lit);outline-offset:2px;border-radius:6px}
+
+/* ---------- Cards ---------- */
+.card{
+  position:relative;overflow:hidden;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);
+  padding:26px 20px 24px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:17px;
+  animation:rise .36s cubic-bezier(.2,.7,.3,1) both;
+}
+/* the hairline "developing" rule — signature motif */
+.card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--brass),transparent);
+  animation:develop .9s ease-out both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes develop{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* ---------- Type ---------- */
+h1,h2,h3{font-family:'Cinzel',Georgia,serif;color:var(--brass-lit);letter-spacing:.03em}
+h1{font-size:clamp(1.5rem,6.2vw,2.05rem);text-align:center;line-height:1.2;text-shadow:0 2px 14px rgba(0,0,0,.8)}
+h2{font-size:1.3rem;line-height:1.3}
+.kicker{text-align:center;font-size:.74rem;letter-spacing:.24em;text-transform:uppercase;color:var(--brass-dim);font-weight:800}
+.caseid{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-faint);letter-spacing:.1em}
+.lede{color:var(--ink-mute);font-size:.95rem}
+.label{font-size:.73rem;font-weight:800;text-transform:uppercase;letter-spacing:.13em;color:var(--brass-lit)}
+.tags{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+.tag{background:var(--inset);border:1px solid var(--line);border-radius:999px;padding:4px 12px;
+  font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;color:var(--brass-lit)}
+
+/* ---------- Cipher plate ---------- */
+.cipher{
+  background:var(--inset);border:1px solid var(--brass-dim);border-radius:var(--r-m);
+  padding:20px 16px;text-align:center;white-space:pre-wrap;
+  font-family:'JetBrains Mono',monospace;font-size:.95rem;line-height:1.8;
+  letter-spacing:.06em;color:#ffdd87;box-shadow:inset 0 2px 14px rgba(0,0,0,.65);
+}
+
+/* ---------- Inputs ---------- */
+input[type=text]{
+  width:100%;background:var(--inset);border:1px solid var(--line);border-radius:var(--r-m);
+  padding:15px 16px;font-size:1.02rem;color:var(--ink);font-family:inherit;outline:none;transition:.18s;
+}
+input[type=text]::placeholder{color:var(--ink-faint)}
+input[type=text]:focus{border-color:var(--brass-lit);box-shadow:0 0 0 3px var(--glow)}
+
+/* ---------- Panels / lists ---------- */
+.panel{background:var(--inset);border:1px solid var(--line);border-radius:var(--r-m);padding:15px;display:flex;flex-direction:column;gap:11px}
+.check{display:flex;gap:12px;align-items:flex-start;font-size:.91rem;cursor:pointer;user-select:none}
+.check input{appearance:none;-webkit-appearance:none;width:22px;height:22px;flex:0 0 22px;margin-top:1px;
+  border:1px solid var(--brass-dim);border-radius:5px;background:var(--surface);cursor:pointer;position:relative;transition:.15s}
+.check input:checked{background:var(--brass);border-color:var(--brass-lit)}
+.check input:checked::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#0a0e16;font-weight:900;font-size:14px}
+.check input:checked + span{color:var(--ink-faint);text-decoration:line-through}
+.hint{background:var(--inset);border-left:3px solid var(--brass);border-radius:0 var(--r-s) var(--r-s) 0;
+  padding:11px 13px;font-size:.88rem;color:var(--ink-mute);animation:rise .3s both}
+.alert{display:flex;gap:11px;align-items:flex-start;border-radius:var(--r-m);padding:13px 14px;font-size:.86rem}
+.alert.warn{background:rgba(224,75,87,.10);border:1px solid rgba(224,75,87,.42);color:#ffc9cd}
+.alert.note{background:rgba(53,168,153,.09);border:1px solid rgba(53,168,153,.38);color:#aee6dd}
+.msg{display:none;font-size:.9rem;padding:11px 13px;border-radius:var(--r-s)}
+.msg.bad{display:block;background:rgba(224,75,87,.14);border:1px solid var(--crimson);color:#ff9ea6;animation:shake .3s}
+.msg.good{display:block;background:rgba(53,168,153,.14);border:1px solid var(--jade);color:#86e6d8}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.divider{height:1px;background:var(--line);border:0}
+
+/* ---------- Progress rail ---------- */
+.rail{display:flex;gap:5px}
+.rail i{flex:1;height:4px;border-radius:2px;background:var(--surface-2);transition:.3s}
+.rail i.done{background:var(--brass)}
+.rail i.now{background:var(--brass-lit);box-shadow:0 0 8px var(--glow)}
+
+/* ---------- Photo slot ---------- */
+.photo{display:flex;flex-direction:column;gap:8px}
+.photo img{width:100%;border-radius:var(--r-m);border:1px solid var(--line);display:block}
+.file-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;
+  background:var(--surface-2);border:1px dashed var(--brass-dim);border-radius:var(--r-m);
+  color:var(--ink-mute);font-size:.85rem;font-weight:700;cursor:pointer;padding:10px}
+.file-btn:hover{color:var(--brass-lit);border-color:var(--brass)}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+
+/* ---------- Results ---------- */
+.trophy{text-align:center;font-size:3.4rem;filter:drop-shadow(0 0 22px var(--glow));animation:pop .6s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-box{background:var(--inset);border:1px solid var(--line);border-radius:var(--r-m);padding:13px 10px;text-align:center}
+.stat-box b{display:block;font-family:'JetBrains Mono',monospace;font-size:1.25rem;color:var(--brass-lit);line-height:1.3}
+.stat-box span{font-size:.67rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-faint);font-weight:700}
+.badge{display:flex;gap:10px;align-items:center;background:var(--inset);border:1px solid var(--line);
+  border-radius:var(--r-m);padding:10px 13px;font-size:.87rem}
+.badge .b-ico{font-size:1.3rem}
+
+/* ---------- Modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(3,5,9,.88);backdrop-filter:blur(7px);
+  display:none;align-items:center;justify-content:center;padding:16px;z-index:200}
+.overlay.on{display:flex}
+.modal{background:var(--surface);border:1px solid var(--brass);border-radius:var(--r-l);
+  padding:22px;width:100%;max-width:640px;max-height:88vh;overflow-y:auto;
+  display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,.9)}
+.key-card{background:var(--inset);border:1px solid var(--line);border-radius:var(--r-m);padding:12px 13px;font-size:.86rem}
+.key-card b{color:var(--brass-lit)}
+.key-ans{font-family:'JetBrains Mono',monospace;color:#86e6d8;font-size:.82rem}
+.key-hint{color:var(--ink-mute);font-size:.8rem;display:block;margin-top:4px}
+
+@media (max-width:420px){ .hud-group{gap:12px} .card{padding:22px 16px} }
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="shell">
+  <header class="hud" id="hud" hidden>
+    <div class="hud-group">
+      <div class="stat"><b id="h-stop">1/6</b><span>Stop</span></div>
+      <div class="stat"><b id="h-score">100</b><span>Score</span></div>
+      <div class="stat"><b id="h-time">00:00</b><span>Elapsed</span></div>
+    </div>
+    <div class="hud-btns">
+      <button class="mini" onclick="openOrg()">Organizer</button>
+      <button class="mini" onclick="askReset()">Reset</button>
+    </div>
+  </header>
+  <main id="screen" aria-live="polite"></main>
+</div>
+
+<!-- ORGANIZER DOSSIER -->
+<div class="overlay" id="org" role="dialog" aria-modal="true" aria-label="Organizer dossier">
+  <div class="modal">
+    <h2>Organizer Dossier</h2>
+    <div class="alert warn"><span>⚠️</span><div><b>Spoiler shield only — not security.</b> Answers live in this page's JavaScript, so anyone who opens developer tools can read them. This screen exists to prevent accidental spoilers. For true secrecy you'd need a server to validate answers (a small backend + hosting cost); that's overkill for a one-night drive.</div></div>
+    <div class="panel">
+      <span class="label">Scoring Rules</span>
+      <div style="font-size:.86rem;color:var(--ink-mute)">
+        Start at <b style="color:var(--brass-lit)">100 points</b>.<br>
+        Hint 1 … −2 &nbsp;•&nbsp; Hint 2 … −4 &nbsp;•&nbsp; Reveal Answer … −8<br>
+        Wrong guesses are free — guess as much as you like.<br>
+        Reveal unlocks after 3 wrong attempts (or anytime from this dossier).
+      </div>
+    </div>
+    <div id="org-body" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="row2">
+      <button class="btn ghost" onclick="askReset()">Reset Game</button>
+      <button class="btn" onclick="closeOrg()">Close Dossier</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   1. ROUTE + PUZZLE DATA
+   ------------------------------------------------------------
+   VERIFY-BEFORE-YOU-PLAY: drive times are estimates. Confirm each
+   site's access/hours yourself before the run — see the "Field
+   Verification" notes on the home screen.
+   ============================================================ */
+const STOPS = [
+ {
+  id:1, code:"CF-001",
+  title:"The Forgotten Future",
+  place:"Woodland Veterans Park, Shawnee, OK",
+  maps:"Woodland Veterans Park, Shawnee, OK",
+  drive:"Starting point",
+  access:"Public city park. Lit paths; visit before full dark if possible.",
+  story:"Every case begins with a question about time. Your first message was carved for people who hadn't been born yet. Read it the way a detective reads a ransom note — down the margin, not across the page.",
+  method:"Acrostic — read the first letter of each line",
+  cipher:"Time moves forward, but memories remain.\nInside the ground, tomorrow meets yesterday.\nMany years may pass before the secret returns.\nEvery generation inherits what came before.",
+  answers:["TIME"],
+  hints:["Detectives read margins, not sentences.","Stack the first letter of each line, top to bottom. Four letters."],
+  tasks:["Find any plaque, marker, or dedication in the park and read it aloud.","Team photo under the park's most photogenic light source.","Each person names one object they'd seal in a 2026 time capsule."],
+  bonus:"In 30 seconds or less, argue which team member's capsule item would confuse people the most in 100 years.",
+  next:"Intercepted for Stop 2 → N J M M J O H"
+ },
+ {
+  id:2, code:"CF-002",
+  title:"The Giant That Feeds the Town",
+  place:"Shawnee Milling Company (view from public sidewalk), Shawnee, OK",
+  maps:"Shawnee Milling Company, Shawnee, OK",
+  drive:"≈5 min from Stop 1",
+  access:"ACTIVE INDUSTRIAL SITE. Observe from the public sidewalk or street only. Do not enter property, lots, or rail areas.",
+  story:"Your first cipher pointed at TIME. The second points at the structure that's been keeping Shawnee fed since long before anyone in your car was born. Park legally, stay on public ground, and look up.",
+  method:"Caesar shift — each letter moved forward by one",
+  cipher:"N   J   M   M   J   O   H",
+  answers:["MILLING","SHAWNEE MILLING"],
+  hints:["Every letter is sitting one seat to the right of where it belongs.","Shift each letter backward one place: N→M, J→I, M→L …"],
+  tasks:["Photograph the grain elevators from the public right-of-way.","Count how many distinct silo cylinders your team can see — agree on a number.","Name three foods in your kitchen right now that start as milled grain."],
+  bonus:"Forced-perspective photo where one teammate appears to be holding up the entire elevator.",
+  next:"Intercepted for Stop 3 → 18 · 15 · 21 · 20 · 5"
+ },
+ {
+  id:3, code:"CF-003",
+  title:"The Mother Road",
+  place:"Historic Route 66 corridor, Wellston, OK",
+  maps:"Wellston, OK Route 66",
+  drive:"≈30 min northeast of Shawnee",
+  access:"Roadside. Park fully off the travel lane. Headlights on, hazards on if stopped.",
+  story:"Two numbers and five letters put you on the most famous stretch of asphalt in America. Somewhere along this corridor the twentieth century is still advertising itself in paint and neon.",
+  method:"A1Z26 — numbers map to alphabet positions",
+  cipher:"18 · 15 · 21 · 20 · 5",
+  answers:["ROUTE","ROUTE 66","ROUTE66"],
+  hints:["Count on your fingers — A is 1.","18=R, 15=O, 21=U … finish it and add the famous two digits."],
+  tasks:["Photograph any authentic Route 66 shield, sign, or vintage roadside structure you find.","Read aloud one piece of text you can physically see on a sign here.","Everyone picks the one decade this spot most feels like."],
+  bonus:"Headlight-lit group photo staged like a 1950s album cover.",
+  next:"Intercepted for Stop 4 → 13 · 21 · 18 · 1 · 12"
+ },
+ {
+  id:4, code:"CF-004",
+  title:"The Painted Past",
+  place:"Downtown Chandler, OK — Manvel Ave. historic district",
+  maps:"Manvel Avenue, Chandler, OK",
+  drive:"≈15 min east along Route 66",
+  access:"Public downtown sidewalks. Well-lit main street; most storefronts closed in the evening.",
+  story:"Same cipher, new word. Chandler's downtown wears its history on the outside — on brick, on glass, on painted wall. Walk the block and let the buildings testify.",
+  method:"A1Z26 again — you know this one now",
+  cipher:"13 · 21 · 18 · 1 · 12",
+  answers:["MURAL","MURALS"],
+  hints:["Thirteenth letter, twenty-first letter … you've done this before.","13=M, 21=U, 18=R, 1=A, 12=L."],
+  tasks:["Find any painted wall art or historic painted signage downtown and photograph it.","Identify the oldest date visible anywhere on this block — cornerstone, sign, or plaque.","Each person picks their favorite building facade and defends it in one sentence."],
+  bonus:"Recreate the pose or composition of something painted on a wall.",
+  next:"Intercepted for Stop 5 → 10·9·13 / 20·8·15·18·16·5"
+ },
+ {
+  id:5, code:"CF-005",
+  title:"The Athlete's Name",
+  place:"Jim Thorpe memorial site, Prague, OK",
+  maps:"Jim Thorpe Memorial, Prague, OK",
+  drive:"≈25 min south via US-377",
+  access:"Roadside memorial. Treat as a place of respect — stay on public ground, no climbing, keep voices down.",
+  story:"Two words this time. The man they name is widely called the greatest all-around athlete of the twentieth century, and he came from this corner of Oklahoma. You are a guest here. Act like it.",
+  method:"A1Z26 in two segments — first name, then surname",
+  cipher:"10 · 9 · 13     /     20 · 8 · 15 · 18 · 16 · 5",
+  answers:["JIM THORPE","THORPE","JIMTHORPE"],
+  hints:["Three letters, then six. The short one is a very common first name.","10=J, 9=I, 13=M. Now decode the surname the same way."],
+  tasks:["Respectful team photo at the memorial.","Read aloud any text on the memorial itself — no phones, read what's actually there.","Each person names a sport they'd have the best shot at mastering, and why."],
+  bonus:"Silent 20 seconds as a team before you leave. No phones. Just look.",
+  next:"Intercepted for Stop 6 → final deduction riddle"
+ },
+ {
+  id:6, code:"CF-006",
+  title:"The Last Piece",
+  place:"Downtown Shawnee — Main Street, Shawnee, OK",
+  maps:"Main Street, Downtown Shawnee, OK",
+  drive:"≈25 min back west to Shawnee",
+  access:"Public downtown street. Park in any legal street or lot space.",
+  story:"You've closed the loop. Park, get out, stand on Main Street, and answer the only question that was ever really being asked tonight. No cipher this time — just deduction.",
+  method:"Deduction riddle — one word",
+  cipher:"I keep what was.\nI connect where you are.\nI show what others have made.\nI remember those who came before.\n\nI was in the park, on the road,\non the wall, and on the monument.\n\nWhat am I?",
+  answers:["HISTORY","OUR HISTORY","OKLAHOMA HISTORY","HERITAGE","THE PAST","MEMORY"],
+  hints:["What did a park, a mill, a highway, a mural, and a memorial all have in common tonight?","Seven letters. Starts with H. It's the thing museums are made of."],
+  tasks:["In one sentence each, connect three of tonight's stops to your answer.","Vote: hardest cipher of the night.","Choose the single best photo your team took and title it."],
+  bonus:"Give your squad an official case-file codename. Write it down. It's permanent now.",
+  next:"CASE CLOSED"
+ }
+];
+
+const ACHIEVEMENTS = [
+ {id:"purist",   ico:"🧠", name:"The Purist",        test:s=>s.hintsUsed===0,                        desc:"Finished without a single hint."},
+ {id:"flawless", ico:"💎", name:"Flawless Record",   test:s=>s.score===100,                          desc:"Perfect 100. Nothing deducted."},
+ {id:"swift",    ico:"⚡", name:"Fast Hands",         test:s=>s.elapsed>0 && s.elapsed<7200,          desc:"Case closed in under two hours."},
+ {id:"firsttry", ico:"🎯", name:"Cold Read",          test:s=>Object.keys(s.wrong).length===0,        desc:"Never submitted a wrong answer."},
+ {id:"thorough", ico:"📋", name:"Thorough Investigator", test:s=>Object.values(s.checks).filter(Boolean).length>=16, desc:"Completed 16+ field objectives."},
+ {id:"closer",   ico:"🏁", name:"The Closer",         test:s=>s.done.length===6,                      desc:"All six checkpoints cleared."}
+];
+
+/* ============================================================
+   2. STATE — persisted to localStorage (THIS DEVICE + BROWSER ONLY).
+   Progress does NOT sync between phones. Each player's phone
+   keeps its own save. Use one "team phone" for a shared score.
+   ============================================================ */
+const KEY="shawnee_night_quest_v2";
+let S={started:false,idx:0,score:100,done:[],answered:{},wrong:{},hintLevel:{},
+       checks:{},hintsUsed:0,reveals:0,startMs:null,elapsed:0,finished:false};
+let photos={}; // session-only, never persisted
+let timer=null;
+
+function load(){ try{const r=localStorage.getItem(KEY); if(r) S=Object.assign(S,JSON.parse(r));}catch(e){} }
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} hud(); }
+function askReset(){
+  if(confirm("Reset ALL progress?\n\nThis erases your score, completed stops, answers and checklists on this device. It cannot be undone.")){
+    localStorage.removeItem(KEY); location.reload();
+  }
+}
+
+/* ---------- time ---------- */
+function tick(){ if(S.started&&!S.finished&&S.startMs){ S.elapsed=Math.floor((Date.now()-S.startMs)/1000); hud(); } }
+function clock(sec){ const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
+  return (h?h+":":"")+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"); }
+
+/* ---------- HUD ---------- */
+const hudEl=document.getElementById("hud"), screen=document.getElementById("screen");
+function hud(){
+  if(!S.started||S.finished){hudEl.hidden=true;return;}
+  hudEl.hidden=false;
+  document.getElementById("h-stop").textContent=(S.idx+1)+"/6";
+  document.getElementById("h-score").textContent=S.score;
+  document.getElementById("h-time").textContent=clock(S.elapsed);
+}
+
+/* ============================================================
+   3. SCREENS
+   ============================================================ */
+function render(){ hud(); window.scrollTo({top:0});
+  if(!S.started) home(); else if(S.finished) results(); else stop(S.idx);
+}
+
+function home(){
+  screen.innerHTML=`
+  <div class="card">
+    <p class="kicker">Case File · Pottawatomie &amp; Lincoln County</p>
+    <h1>THE SHAWNEE<br>NIGHT QUEST</h1>
+    <p class="kicker" style="color:var(--ink-faint);letter-spacing:.3em">The Oklahoma Mystery Run</p>
+    <div class="tags">
+      <span class="tag">6 CHECKPOINTS</span><span class="tag">2–3 HOURS</span>
+      <span class="tag">100 POINTS</span><span class="tag">ADULTS · DRIVING</span>
+    </div>
+    <p class="lede" style="text-align:center">Six stops. Five ciphers. One question you won't see coming until the end. Everything runs in this browser — nothing to install.</p>
+
+    <div class="alert warn"><span style="font-size:1.25rem">⚠️</span><div>
+      <b>Driver rule, non-negotiable.</b> The driver does not touch this phone. Ciphers, checklists and navigation are passenger jobs — or pull over and park first. Every puzzle is meant to be solved standing still.
+    </div></div>
+
+    <div class="alert note"><span style="font-size:1.25rem">📍</span><div>
+      <b>Field verification before you run this.</b> Drive times are estimates and access can change. Confirm each stop in Google Maps yourself beforehand — especially Stop 2 (active industrial site, view from public sidewalk only) and Stop 5 (memorial site, daytime visit recommended if you want to read the inscriptions). The Organizer Dossier lists every location and clue so you can preview the whole route.
+    </div></div>
+
+    <div class="panel">
+      <span class="label">How Scoring Works</span>
+      <div style="font-size:.88rem;color:var(--ink-mute);line-height:1.8">
+        You start at <b style="color:var(--brass-lit)">100</b>.<br>
+        Hint 1 costs <b>2</b> · Hint 2 costs <b>4</b> · Reveal Answer costs <b>8</b>.<br>
+        <b style="color:var(--jade)">Wrong guesses cost nothing.</b> Guess freely.<br>
+        Progress saves on <b>this device only</b> — it won't appear on anyone else's phone.
+      </div>
+    </div>
+
+    <button class="btn full" onclick="begin()">OPEN THE CASE FILE →</button>
+    <button class="btn ghost full" onclick="openOrg()">Organizer Preview (spoilers)</button>
+  </div>`;
+}
+
+function begin(){ S.started=true; if(!S.startMs) S.startMs=Date.now()-S.elapsed*1000; save(); render(); }
+
+function stop(i){
+  const st=STOPS[i], cleared=S.done.includes(st.id), wrong=S.wrong[st.id]||0, lvl=S.hintLevel[st.id]||0;
+  const rail=STOPS.map((x,n)=>`<i class="${S.done.includes(x.id)?'done':(n===i?'now':'')}"></i>`).join("");
+  const tasks=st.tasks.map((t,n)=>{const k=st.id+"_"+n;
+    return `<label class="check"><input type="checkbox" onchange="flip('${k}')" ${S.checks[k]?"checked":""}><span>${t}</span></label>`;}).join("");
+  const hints=[0,1].slice(0,lvl).map(n=>`<div class="hint"><b style="color:var(--brass-lit)">Hint ${n+1}:</b> ${st.hints[n]}</div>`).join("");
+
+  screen.innerHTML=`
+  <div class="card">
+    <div class="rail">${rail}</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+      <span class="caseid">${st.code} · STOP ${st.id} OF 6</span>
+      <span class="caseid" style="color:var(--brass-dim)">${st.drive}</span>
+    </div>
+    <h2>${st.title}</h2>
+    <p class="lede">${st.story}</p>
+
+    <a class="btn map full" target="_blank" rel="noopener"
+       href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(st.maps)}">
+       🧭 NAVIGATE TO LOCATION</a>
+    <div style="text-align:center;margin-top:-8px">
+      <div style="font-size:.84rem;color:var(--ink-mute);font-weight:600">${st.place}</div>
+      <div style="font-size:.76rem;color:var(--ink-faint);margin-top:3px">⚠ ${st.access}</div>
+    </div>
+
+    <hr class="divider">
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <span class="label">${st.method}</span>
+      <div class="cipher">${st.cipher}</div>
+    </div>
+
+    ${cleared ? `
+      <div class="msg good">✓ Checkpoint cleared — decoded: <b>${S.answered[st.id]||st.answers[0]}</b></div>
+    ` : `
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label for="ans" class="label" style="color:var(--ink-mute)">Your decoded answer</label>
+        <input id="ans" type="text" placeholder="Type it here…" autocomplete="off"
+               autocapitalize="characters" spellcheck="false"
+               onkeydown="if(event.key==='Enter')submit(${st.id})">
+        <div id="msg" class="msg"></div>
+        <div class="row2">
+          <button class="btn" onclick="submit(${st.id})">SUBMIT</button>
+          <button class="btn ghost" onclick="hint(${st.id})" ${lvl>=2?"disabled":""}>
+            ${lvl===0?"HINT (−2)":lvl===1?"HINT 2 (−4)":"NO HINTS LEFT"}
+          </button>
+        </div>
+        <div id="hints">${hints}</div>
+        ${wrong>=3||lvl>=2 ? `<button class="btn danger full" onclick="reveal(${st.id})">Reveal Answer (−8 points)</button>` : ``}
+      </div>
+    `}
+
+    <hr class="divider">
+    <div class="panel">
+      <span class="label">Field Objectives</span>
+      ${tasks}
+      <div style="font-size:.82rem;color:var(--brass-dim);border-top:1px dashed var(--line);padding-top:9px;margin-top:2px">
+        ⭐ <b>Bonus:</b> ${st.bonus}
+      </div>
+    </div>
+
+    <div class="photo">
+      <label class="file-btn" for="pf${st.id}">📷 Attach a photo from this stop (optional)</label>
+      <input id="pf${st.id}" type="file" accept="image/*" onchange="attach(event,${st.id})">
+      ${photos[st.id]?`<img src="${photos[st.id]}" alt="Team photo from ${st.title}">`:""}
+      <div style="font-size:.74rem;color:var(--ink-faint)">Previews only — the image never leaves your phone and is <b>not saved</b> when you close the tab. Your real photos stay safely in your camera roll.</div>
+    </div>
+
+    <div class="row2">
+      <button class="btn ghost" onclick="go(${i-1})" ${i===0?"disabled":""}>← Previous</button>
+      ${cleared
+        ? `<button class="btn" onclick="go(${i+1})">${i===5?"CLOSE THE CASE →":"Next Stop →"}</button>`
+        : `<button class="btn ghost locked" aria-disabled="true">🔒 Solve to unlock</button>`}
+    </div>
+  </div>`;
+  const el=document.getElementById("ans"); if(el) el.focus({preventScroll:true});
+}
+
+/* ============================================================
+   4. ACTIONS
+   ============================================================ */
+const norm=v=>v.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
+
+function submit(id){
+  const inp=document.getElementById("ans"), msg=document.getElementById("msg"); if(!inp) return;
+  const st=STOPS.find(s=>s.id===id), v=norm(inp.value);
+  if(!v){ msg.className="msg bad"; msg.textContent="Enter an answer first."; return; }
+  if(st.answers.some(a=>norm(a)===v)){
+    msg.className="msg good"; msg.textContent="✓ Correct. Checkpoint cleared.";
+    if(!S.done.includes(id)){ S.done.push(id); S.answered[id]=inp.value.trim().toUpperCase(); }
+    save(); setTimeout(render,750);
+  }else{
+    msg.className="msg bad";
+    S.wrong[id]=(S.wrong[id]||0)+1;
+    msg.textContent = S.wrong[id]>=3
+      ? "Still not it. Reveal is now unlocked below if you want it."
+      : `Not it. (${S.wrong[id]} wrong — wrong guesses are free.)`;
+    save(); if(S.wrong[id]===3) setTimeout(render,900);
+  }
+}
+
+function hint(id){
+  const lvl=S.hintLevel[id]||0; if(lvl>=2) return;
+  S.hintLevel[id]=lvl+1; S.hintsUsed++;
+  S.score=Math.max(0,S.score-(lvl===0?2:4));
+  save(); render();
+}
+
+function reveal(id){
+  if(!confirm("Reveal the answer for 8 points?")) return;
+  const st=STOPS.find(s=>s.id===id);
+  S.score=Math.max(0,S.score-8); S.reveals++;
+  S.answered[id]=st.answers[0];
+  if(!S.done.includes(id)) S.done.push(id);
+  save(); render();
+}
+
+function flip(k){ S.checks[k]=!S.checks[k]; save(); }
+
+function attach(e,id){
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=ev=>{ photos[id]=ev.target.result; render(); }; r.readAsDataURL(f);
+}
+
+function go(n){
+  if(n>=STOPS.length){ S.finished=true; if(S.startMs) S.elapsed=Math.floor((Date.now()-S.startMs)/1000); }
+  else if(n>=0) S.idx=n;
+  save(); render();
+}
+
+/* ============================================================
+   5. CASE CLOSED
+   ============================================================ */
+function results(){
+  const solved=Object.keys(S.answered).length-S.reveals;
+  const earned=ACHIEVEMENTS.filter(a=>a.test(S));
+  const rank = S.score>=95?"MASTER DETECTIVE" : S.score>=85?"LEAD INVESTIGATOR" : S.score>=70?"FIELD AGENT" : "ROOKIE — BUT YOU FINISHED";
+  const note = S.hintsUsed===0
+    ? "Not one hint. Your team read every cipher cold — that's the hardest way to do this and you did it anyway."
+    : S.score>=85
+      ? "A few nudges, no real stumbles. Your team moved like people who've done this before."
+      : "You got stuck, you asked for help, you kept driving. That's how real cases close. The answer was HISTORY the whole time — and you went and stood in it.";
+
+  screen.innerHTML=`
+  <div class="card" style="text-align:center">
+    <div class="trophy">🗝️</div>
+    <p class="kicker">File ${STOPS[5].code} · Status</p>
+    <h1>CASE CLOSED</h1>
+    <p class="kicker" style="color:var(--brass);letter-spacing:.2em">${rank}</p>
+    <p class="lede">${note}</p>
+
+    <div class="grid2">
+      <div class="stat-box"><b>${S.score}<span style="font-size:.8rem;color:var(--ink-faint)">/100</span></b><span>Final Score</span></div>
+      <div class="stat-box"><b>${S.done.length}/6</b><span>Stops Cleared</span></div>
+      <div class="stat-box"><b>${Math.max(0,solved)}</b><span>Puzzles Solved</span></div>
+      <div class="stat-box"><b>${S.hintsUsed}</b><span>Hints Used</span></div>
+      <div class="stat-box"><b>${clock(S.elapsed)}</b><span>Elapsed Time</span></div>
+      <div class="stat-box"><b>${Object.values(S.checks).filter(Boolean).length}</b><span>Objectives Done</span></div>
+    </div>
+
+    <div class="panel" style="text-align:left">
+      <span class="label">Achievements Earned — ${earned.length}/${ACHIEVEMENTS.length}</span>
+      ${earned.length?earned.map(a=>`<div class="badge"><span class="b-ico">${a.ico}</span><div><b style="color:var(--brass-lit)">${a.name}</b><br><span style="color:var(--ink-mute);font-size:.8rem">${a.desc}</span></div></div>`).join("")
+        :`<div style="color:var(--ink-faint);font-size:.86rem">No badges this run — the case still closed. That's what counts.</div>`}
+    </div>
+
+    <div class="panel" style="text-align:left">
+      <span class="label">📷 Best Photo Prompt</span>
+      <p style="font-size:.89rem;color:var(--ink-mute)">
+        Scroll back through tonight's camera roll. Pick <b style="color:var(--brass-lit)">one</b> photo — the one that would make someone who wasn't in the car wish they had been. Caption it with your squad's codename and send it to the group chat. That's the case file's cover image.
+      </p>
+    </div>
+
+    <button class="btn full" onclick="S.finished=false;S.idx=0;save();render()">Review the Adventure</button>
+    <div class="row2">
+      <button class="btn ghost" onclick="openOrg()">Organizer Dossier</button>
+      <button class="btn ghost" onclick="askReset()">Start New Game</button>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   6. ORGANIZER MODAL
+   ============================================================ */
+function openOrg(){
+  document.getElementById("org-body").innerHTML = `<span class="label">Full Route &amp; Answer Key</span>` +
+    STOPS.map(s=>`
+    <div class="key-card">
+      <b>${s.code} · Stop ${s.id}: ${s.title}</b><br>
+      <span style="color:var(--ink-mute)">📍 ${s.place} · ${s.drive}</span><br>
+      <span style="color:#ffc9cd;font-size:.79rem">⚠ ${s.access}</span><br>
+      <span class="key-ans">✔ ANSWER: ${s.answers.join("  /  ")}</span>
+      <span class="key-hint"><b>Method:</b> ${s.method}</span>
+      <span class="key-hint"><b>Hint 1:</b> ${s.hints[0]}</span>
+      <span class="key-hint"><b>Hint 2:</b> ${s.hints[1]}</span>
+      <span class="key-hint"><b>Handoff:</b> ${s.next}</span>
+    </div>`).join("");
+  document.getElementById("org").classList.add("on");
+}
+function closeOrg(){ document.getElementById("org").classList.remove("on"); }
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeOrg(); });
+document.getElementById("org").addEventListener("click",e=>{ if(e.target.id==="org") closeOrg(); });
+
+/* ---------- boot ---------- */
+load(); render(); timer=setInterval(tick,1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GROUND — Operations Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F2ED;
+    --surface: #FDFCFA;
+    --surface2: #EDE9E2;
+    --border: rgba(60,45,20,0.12);
+    --border-med: rgba(60,45,20,0.22);
+    --text-primary: #1C1510;
+    --text-secondary: #6B5F52;
+    --text-muted: #A09080;
+    --accent: #C45E1A;
+    --accent-light: #F5E6D8;
+    --accent-mid: #E8A070;
+    --green: #2D7A4F;
+    --green-light: #E0F0E8;
+    --amber: #C47A1A;
+    --amber-light: #FDF0D8;
+    --red: #C42A1A;
+    --red-light: #FAE8E6;
+    --blue: #1A5CC4;
+    --blue-light: #E6EEFA;
+    --font-sans: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 28px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+  }
+
+  .logo {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .header-title {
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .header-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-family: var(--font-mono);
+  }
+
+  .period-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    padding: 4px;
+    border-radius: var(--radius);
+  }
+
+  .period-btn {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 400;
+  }
+
+  .period-btn.active {
+    background: var(--surface);
+    color: var(--text-primary);
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .period-btn:hover:not(.active) {
+    color: var(--text-primary);
+  }
+
+  /* Metrics row */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    transition: border-color 0.15s;
+  }
+
+  .metric-card:hover { border-color: var(--border-med); }
+
+  .metric-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .metric-value {
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1;
+  }
+
+  .metric-delta {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .delta-up { color: var(--green); }
+  .delta-neutral { color: var(--text-muted); }
+
+  /* Charts row */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1.65fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .chart-toggle {
+    display: flex;
+    gap: 3px;
+  }
+
+  .chart-btn {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .chart-btn.active {
+    background: var(--accent-light);
+    border-color: var(--accent-mid);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Top items */
+  .item-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .item-row:last-child { border-bottom: none; }
+
+  .item-name {
+    min-width: 90px;
+    color: var(--text-primary);
+    font-weight: 400;
+  }
+
+  .bar-track {
+    flex: 1;
+    background: var(--surface2);
+    border-radius: 3px;
+    height: 5px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent);
+    transition: width 0.4s ease;
+  }
+
+  .item-count {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    min-width: 28px;
+    text-align: right;
+  }
+
+  /* Bottom row */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Staff */
+  .staff-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .staff-row:last-child { border-bottom: none; }
+
+  .staff-info { display: flex; flex-direction: column; gap: 2px; }
+  .staff-name { font-weight: 500; color: var(--text-primary); }
+  .staff-shift { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+
+  .badge {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .badge-on { background: var(--green-light); color: var(--green); }
+  .badge-later { background: var(--amber-light); color: var(--amber); }
+  .badge-off { background: var(--surface2); color: var(--text-muted); }
+
+  /* Alerts */
+  .alert-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .alert-row:last-child { border-bottom: none; }
+
+  .alert-indicator {
+    width: 3px;
+    border-radius: 2px;
+    align-self: stretch;
+    flex-shrink: 0;
+    min-height: 36px;
+  }
+
+  .alert-body { flex: 1; }
+
+  .alert-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+
+  .alert-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .alert-time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .footer-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .footer-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Divider label */
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    margin-top: 4px;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    body { padding: 16px; }
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .bottom-row { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 560px) {
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .header { flex-direction: column; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">Ground</div>
+    <div class="header-title">Operations dashboard</div>
+    <div class="header-meta">Week of March 24, 2026 &nbsp;·&nbsp; Oakwood location</div>
+  </div>
+  <div class="period-toggle">
+    <button class="period-btn active" onclick="setPeriod('week', this)">This week</button>
+    <button class="period-btn" onclick="setPeriod('month', this)">This month</button>
+  </div>
+</div>
+
+<!-- Metrics -->
+<div class="metrics">
+  <div class="metric-card">
+    <div class="metric-label">Total orders</div>
+    <div class="metric-value" id="m-orders">1,284</div>
+    <div class="metric-delta delta-up" id="d-orders">↑ 8% vs last week</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Revenue</div>
+    <div class="metric-value" id="m-rev">$6,842</div>
+    <div class="metric-delta delta-up" id="d-rev">↑ 11% vs last week</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Avg order value</div>
+    <div class="metric-value" id="m-aov">$5.33</div>
+    <div class="metric-delta delta-up" id="d-aov">↑ 3% vs last week</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Peak hour</div>
+    <div class="metric-value" id="m-peak">8–9 AM</div>
+    <div class="metric-delta delta-neutral" id="d-peak">94 orders avg, Mon–Fri</div>
+  </div>
+</div>
+
+<!-- Charts row -->
+<div class="charts-row">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Hourly volume — today</div>
+      <div class="chart-toggle">
+        <button class="chart-btn active" id="btn-orders" onclick="setChartView('orders', this)">Orders</button>
+        <button class="chart-btn" id="btn-revenue" onclick="setChartView('revenue', this)">Revenue</button>
+      </div>
+    </div>
+    <div style="position:relative;height:210px;">
+      <canvas id="hourlyChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Top items this week</div>
+    </div>
+    <div class="item-row"><span class="item-name">Latte</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="item-count">312</span></div>
+    <div class="item-row"><span class="item-name">Cold brew</span><div class="bar-track"><div class="bar-fill" style="width:82%"></div></div><span class="item-count">256</span></div>
+    <div class="item-row"><span class="item-name">Cappuccino</span><div class="bar-track"><div class="bar-fill" style="width:68%"></div></div><span class="item-count">212</span></div>
+    <div class="item-row"><span class="item-name">Drip coffee</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="item-count">172</span></div>
+    <div class="item-row"><span class="item-name">Espresso</span><div class="bar-track"><div class="bar-fill" style="width:43%"></div></div><span class="item-count">134</span></div>
+    <div class="item-row"><span class="item-name">Pastry</span><div class="bar-track"><div class="bar-fill" style="width:32%"></div></div><span class="item-count">100</span></div>
+  </div>
+</div>
+
+<!-- Bottom row -->
+<div class="bottom-row">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Staff on shift today</div>
+    </div>
+    <div class="staff-row">
+      <div class="staff-info">
+        <span class="staff-name">Jordan M.</span>
+        <span class="staff-shift">6:00 AM – 2:00 PM</span>
+      </div>
+      <span class="badge badge-on">On shift</span>
+    </div>
+    <div class="staff-row">
+      <div class="staff-info">
+        <span class="staff-name">Priya K.</span>
+        <span class="staff-shift">6:00 AM – 2:00 PM</span>
+      </div>
+      <span class="badge badge-on">On shift</span>
+    </div>
+    <div class="staff-row">
+      <div class="staff-info">
+        <span class="staff-name">Marcus T.</span>
+        <span class="staff-shift">10:00 AM – 6:00 PM</span>
+      </div>
+      <span class="badge badge-on">On shift</span>
+    </div>
+    <div class="staff-row">
+      <div class="staff-info">
+        <span class="staff-name">Lena R.</span>
+        <span class="staff-shift">2:00 PM – close</span>
+      </div>
+      <span class="badge badge-later">Later</span>
+    </div>
+    <div class="staff-row">
+      <div class="staff-info">
+        <span class="staff-name">Chris D.</span>
+        <span class="staff-shift">Not scheduled</span>
+      </div>
+      <span class="badge badge-off">Off</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Alerts &amp; insights</div>
+    </div>
+
+    <div class="alert-row">
+      <div class="alert-indicator" style="background:var(--amber);"></div>
+      <div class="alert-body">
+        <div class="alert-title">Cold brew running low</div>
+        <div class="alert-desc">Est. 4 hrs of supply remaining at current pace</div>
+      </div>
+      <div class="alert-time">Now</div>
+    </div>
+
+    <div class="alert-row">
+      <div class="alert-indicator" style="background:var(--green);"></div>
+      <div class="alert-body">
+        <div class="alert-title">Strong morning rush</div>
+        <div class="alert-desc">8–9 AM orders up 14% vs same time last week</div>
+      </div>
+      <div class="alert-time">8:52 AM</div>
+    </div>
+
+    <div class="alert-row">
+      <div class="alert-indicator" style="background:var(--blue);"></div>
+      <div class="alert-body">
+        <div class="alert-title">Friday forecast: busy</div>
+        <div class="alert-desc">Historical data suggests 20% above avg — consider extra staff</div>
+      </div>
+      <div class="alert-time">Today</div>
+    </div>
+
+    <div class="alert-row">
+      <div class="alert-indicator" style="background:var(--red);"></div>
+      <div class="alert-body">
+        <div class="alert-title">Vendor invoice overdue</div>
+        <div class="alert-desc">Oat milk supplier — 12 days past due date</div>
+      </div>
+      <div class="alert-time">12 days</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="footer-text">Powered by Ground · AI operational intelligence</span>
+  <span class="footer-badge">Live · Auto-refresh</span>
+</div>
+
+<script>
+  const hours = ['6a','7a','8a','9a','10a','11a','12p','1p','2p','3p','4p','5p','6p','7p'];
+  const ordersData = [18,42,94,87,61,55,72,68,44,38,31,27,22,14];
+  const revenueData = ordersData.map(v => Math.round(v * 5.3));
+
+  let currentView = 'orders';
+  let chart;
+
+  function buildChart() {
+    const ctx = document.getElementById('hourlyChart').getContext('2d');
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: hours,
+        datasets: [{
+          data: ordersData,
+          backgroundColor: hours.map((_, i) => i === 2 ? '#C45E1A' : '#EDE9E2'),
+          hoverBackgroundColor: hours.map((_, i) => i === 2 ? '#A84D14' : '#D4CEC4'),
+          borderRadius: 5,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1C1510',
+            titleColor: '#A09080',
+            bodyColor: '#FDFCFA',
+            titleFont: { family: 'DM Mono', size: 11 },
+            bodyFont: { family: 'DM Mono', size: 13 },
+            padding: 10,
+            cornerRadius: 8,
+            callbacks: {
+              label: ctx => currentView === 'orders'
+                ? '  ' + ctx.raw + ' orders'
+                : '  $' + ctx.raw
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: { font: { family: 'DM Mono', size: 11 }, color: '#A09080' }
+          },
+          y: {
+            grid: { color: 'rgba(60,45,20,0.07)', drawBorder: false },
+            border: { display: false },
+            ticks: { font: { family: 'DM Mono', size: 11 }, color: '#A09080' }
+          }
+        }
+      }
+    });
+  }
+
+  function setChartView(view, btn) {
+    currentView = view;
+    document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    chart.data.datasets[0].data = view === 'orders' ? ordersData : revenueData;
+    chart.update();
+  }
+
+  const weekData = {
+    orders: '1,284', rev: '$6,842', aov: '$5.33',
+    dOrders: '↑ 8% vs last week', dRev: '↑ 11% vs last week', dAov: '↑ 3% vs last week'
+  };
+  const monthData = {
+    orders: '5,610', rev: '$29,933', aov: '$5.34',
+    dOrders: '↑ 5% vs last month', dRev: '↑ 7% vs last month', dAov: '↑ 2% vs last month'
+  };
+
+  function setPeriod(period, btn) {
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const d = period === 'week' ? weekData : monthData;
+    document.getElementById('m-orders').textContent = d.orders;
+    document.getElementById('m-rev').textContent = d.rev;
+    document.getElementById('m-aov').textContent = d.aov;
+    document.getElementById('d-orders').textContent = d.dOrders;
+    document.getElementById('d-rev').textContent = d.dRev;
+    document.getElementById('d-aov').textContent = d.dAov;
+  }
+
+  buildChart();
+</script>
+</body>
+</html>

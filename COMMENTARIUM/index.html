@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commentarium</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar" aria-label="Reading controls">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">C</div>
+          <div>
+            <h1>Commentarium</h1>
+            <p>Reading companion</p>
+          </div>
+        </div>
+
+        <section class="control-block">
+          <label for="bookSelect">Book</label>
+          <select id="bookSelect"></select>
+          <button class="secondary-action" id="newBookButton" type="button">Add any book</button>
+          <button class="secondary-action subtle-danger" id="deleteBookButton" type="button">Remove custom book</button>
+        </section>
+
+        <section class="control-block">
+          <div class="label-row">
+            <label for="chapterRange">Current point</label>
+            <output id="chapterOutput" for="chapterRange"></output>
+          </div>
+          <input id="chapterRange" type="range" min="1" max="1" value="1" />
+          <div id="chapterTitle" class="chapter-title"></div>
+        </section>
+
+        <section class="control-block">
+          <div class="label-row">
+            <span>Spoiler guard</span>
+            <span id="guardState" class="pill">On</span>
+          </div>
+          <div class="guard-meter" aria-hidden="true">
+            <span id="guardMeter"></span>
+          </div>
+        </section>
+
+        <nav class="mode-nav" aria-label="Companion modes">
+          <button class="mode-button is-active" data-mode="chapters" type="button">
+            <span class="icon" aria-hidden="true">▦</span>
+            Chapter by chapter
+          </button>
+          <button class="mode-button" data-mode="checkpoint" type="button">
+            <span class="icon" aria-hidden="true">◴</span>
+            Summary so far
+          </button>
+          <button class="mode-button" data-mode="whole" type="button">
+            <span class="icon" aria-hidden="true">★</span>
+            Whole book
+          </button>
+          <button class="mode-button" data-mode="themes" type="button">
+            <span class="icon" aria-hidden="true">◎</span>
+            Plot & themes
+          </button>
+          <button class="mode-button" data-mode="characters" type="button">
+            <span class="icon" aria-hidden="true">⌬</span>
+            Characters
+          </button>
+          <button class="mode-button" data-mode="diagrams" type="button">
+            <span class="icon" aria-hidden="true">△</span>
+            Diagrams
+          </button>
+          <button class="mode-button" data-mode="forum" type="button">
+            <span class="icon" aria-hidden="true">✎</span>
+            Forum
+          </button>
+          <button class="mode-button" data-mode="sources" type="button">
+            <span class="icon" aria-hidden="true">↗</span>
+            Sources
+          </button>
+          <button class="mode-button" data-mode="passage" type="button">
+            <span class="icon" aria-hidden="true">¶</span>
+            Passage lens
+          </button>
+          <button class="mode-button" data-mode="quotes" type="button">
+            <span class="icon" aria-hidden="true">“</span>
+            Quote bank
+          </button>
+          <button class="mode-button" data-mode="study" type="button">
+            <span class="icon" aria-hidden="true">?</span>
+            Study mode
+          </button>
+          <button class="mode-button" data-mode="essay" type="button">
+            <span class="icon" aria-hidden="true">§</span>
+            Essay workspace
+          </button>
+          <button class="mode-button" data-mode="journal" type="button">
+            <span class="icon" aria-hidden="true">◇</span>
+            Reading journal
+          </button>
+          <button class="mode-button" data-mode="ai" type="button">
+            <span class="icon" aria-hidden="true">✦</span>
+            AI companion
+          </button>
+        </nav>
+      </aside>
+
+      <section class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p id="modeKicker" class="kicker">Chapter by chapter</p>
+            <h2 id="modeTitle"></h2>
+          </div>
+          <div id="spoilerBadge" class="spoiler-badge">No spoilers past chapter 1</div>
+        </header>
+
+        <div id="content" class="content-grid"></div>
+      </section>
+    </main>
+
+    <dialog class="book-dialog" id="bookDialog">
+      <form method="dialog" id="bookForm">
+        <header>
+          <h2>Add any book</h2>
+          <button class="icon-button" value="cancel" aria-label="Close" type="button" id="closeDialog">×</button>
+        </header>
+        <label for="customTitle">Title</label>
+        <input id="customTitle" name="title" required autocomplete="off" />
+        <label for="customAuthor">Author</label>
+        <input id="customAuthor" name="author" required autocomplete="off" />
+        <label for="customChapters">Chapters</label>
+        <input id="customChapters" name="chapters" type="number" min="1" max="120" value="12" required />
+        <footer>
+          <button class="secondary-action" type="button" id="cancelDialog">Cancel</button>
+          <button class="primary-action" type="submit">Create book</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <template id="cardTemplate">
+      <article class="card"></article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

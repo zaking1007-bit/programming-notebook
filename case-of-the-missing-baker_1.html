@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case File: The Missing Baker of Main Street</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c2333;
+    --ink-2:#252d42;
+    --parchment:#efe7d3;
+    --parchment-2:#e4d9bd;
+    --brass:#b8863c;
+    --rust:#8a3324;
+    --sage:#5c7359;
+    --pencil:#4a4438;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at top, #2a3350 0%, var(--ink) 55%, #10141f 100%);
+    color:var(--parchment);
+    font-family:'Libre Baskerville', serif;
+    min-height:100vh;
+    padding:24px 14px 80px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+
+  /* ---------- Password gate ---------- */
+  #gate{
+    position:fixed;inset:0;z-index:50;
+    background:linear-gradient(160deg,#10141f,#1c2333 60%,#2a2116);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    transition:opacity .6s ease, visibility .6s ease;
+  }
+  #gate.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+  .folder{
+    background:var(--parchment);
+    color:var(--pencil);
+    width:100%;max-width:420px;
+    padding:36px 28px 30px;
+    border-radius:2px;
+    box-shadow:0 30px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.15);
+    position:relative;
+    transform:rotate(-0.6deg);
+  }
+  .folder::before{
+    content:"CLASSIFIED";
+    position:absolute;top:16px;right:-14px;
+    font-family:'Special Elite',monospace;
+    color:var(--rust);
+    border:3px solid var(--rust);
+    padding:3px 10px;
+    font-size:12px;letter-spacing:2px;
+    transform:rotate(8deg);
+    opacity:.55;
+  }
+  .folder h1{
+    font-family:'Special Elite',monospace;
+    font-size:1.3rem;
+    margin:0 0 6px;
+    letter-spacing:1px;
+  }
+  .folder p{font-size:.92rem;line-height:1.5;margin:0 0 20px;color:#5a5240;}
+  #pw{
+    width:100%;
+    font-family:'Courier Prime',monospace;
+    font-size:1rem;
+    padding:12px 12px;
+    border:2px solid var(--pencil);
+    background:#fbf6e9;
+    color:var(--pencil);
+    letter-spacing:2px;
+    text-transform:uppercase;
+  }
+  #pw:focus{outline:2px solid var(--brass);}
+  #unlockBtn{
+    margin-top:14px;width:100%;
+    font-family:'Special Elite',monospace;
+    background:var(--rust);color:#f4ead6;
+    border:none;padding:12px;font-size:.95rem;letter-spacing:1px;
+    cursor:pointer;
+  }
+  #unlockBtn:hover{background:#752a1d;}
+  #gateError{color:var(--rust);font-size:.85rem;margin-top:10px;font-family:'Courier Prime',monospace;min-height:1.2em;}
+
+  /* ---------- Header ---------- */
+  header{text-align:center;margin-bottom:36px;}
+  .eyebrow{
+    font-family:'Courier Prime',monospace;
+    color:var(--brass);
+    letter-spacing:4px;
+    font-size:.72rem;
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  h1.title{
+    font-family:'Special Elite',monospace;
+    font-size:1.9rem;
+    line-height:1.25;
+    margin:0 0 10px;
+    color:var(--parchment);
+  }
+  .subtitle{color:#b7ad8f;font-size:.95rem;font-style:italic;}
+  .rule{
+    height:1px;background:linear-gradient(90deg,transparent,var(--brass),transparent);
+    margin:26px 0;
+  }
+
+  /* ---------- Briefing ---------- */
+  .briefing{
+    background:rgba(239,231,211,.06);
+    border:1px solid rgba(184,134,60,.35);
+    padding:20px 20px 18px;
+    margin-bottom:34px;
+    font-size:.98rem;
+    line-height:1.7;
+  }
+  .briefing strong{color:var(--brass);}
+  .facts{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    margin-top:16px;font-family:'Courier Prime',monospace;font-size:.78rem;
+    color:#c9c0a4;
+  }
+  .facts div span{display:block;color:var(--brass);letter-spacing:1px;font-size:.7rem;text-transform:uppercase;margin-bottom:2px;}
+
+  /* ---------- Case cards (stops) ---------- */
+  .card{
+    background:var(--parchment);
+    color:var(--pencil);
+    padding:24px 22px 22px;
+    margin-bottom:26px;
+    position:relative;
+    box-shadow:0 14px 30px rgba(0,0,0,.35);
+  }
+  .card .tag{
+    font-family:'Special Elite',monospace;
+    font-size:.72rem;
+    letter-spacing:2px;
+    color:var(--rust);
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+  .card h2{
+    font-family:'Special Elite',monospace;
+    font-size:1.25rem;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .addr{
+    font-family:'Courier Prime',monospace;
+    font-size:.85rem;
+    color:#6b5f47;
+    margin-bottom:14px;
+  }
+  .addr a{color:var(--rust);text-decoration:none;border-bottom:1px dotted var(--rust);}
+  .card p{font-size:.96rem;line-height:1.65;margin:0 0 12px;}
+  .clue-box{
+    background:#fbf6e9;
+    border-left:3px solid var(--brass);
+    padding:14px 16px;
+    font-style:italic;
+    font-size:.95rem;
+    line-height:1.6;
+    margin:14px 0 16px;
+  }
+  .riddle-form{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .riddle-form input[type=text]{
+    flex:1;min-width:140px;
+    font-family:'Courier Prime',monospace;
+    padding:10px 10px;
+    border:2px solid var(--pencil);
+    background:#fbf6e9;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    font-size:.9rem;
+  }
+  .riddle-form button{
+    font-family:'Special Elite',monospace;
+    background:var(--ink);
+    color:var(--parchment);
+    border:none;
+    padding:10px 16px;
+    cursor:pointer;
+    letter-spacing:1px;
+  }
+  .riddle-form button:hover{background:var(--ink-2);}
+  .hint-toggle{
+    display:inline-block;margin-top:10px;
+    font-family:'Courier Prime',monospace;
+    font-size:.78rem;color:#8a7c5a;cursor:pointer;
+    text-decoration:underline;
+  }
+  .hint-text{display:none;font-size:.85rem;color:#6b5f47;margin-top:6px;}
+  .hint-text.show{display:block;}
+  .feedback{font-family:'Courier Prime',monospace;font-size:.82rem;margin-top:8px;min-height:1.1em;color:var(--rust);}
+
+  .next-reveal{
+    display:none;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px dashed #b3a780;
+  }
+  .next-reveal.show{display:block;animation:fadeIn .5s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .stamp{
+    position:absolute;top:14px;right:14px;
+    font-family:'Special Elite',monospace;
+    color:var(--sage);
+    border:3px solid var(--sage);
+    padding:3px 10px;
+    font-size:.78rem;letter-spacing:2px;
+    transform:rotate(6deg);
+    opacity:0;
+    transition:opacity .4s ease, transform .4s ease;
+    pointer-events:none;
+  }
+  .stamp.show{opacity:.8;transform:rotate(6deg) scale(1);}
+
+  .card{overflow:hidden;min-height:70px;}
+  .card.locked > *:not(.locked-veil){ visibility:hidden; }
+  .locked-veil{
+    position:absolute;inset:0;z-index:5;
+    background:rgba(28,35,51,.94);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--parchment);
+    font-family:'Special Elite',monospace;
+    font-size:.85rem;letter-spacing:1px;
+    text-align:center;padding:20px;
+  }
+  .card:not(.locked) .locked-veil{ display:none; }
+
+  footer{
+    text-align:center;
+    margin-top:20px;
+    font-family:'Courier Prime',monospace;
+    font-size:.78rem;
+    color:#8a8267;
+    line-height:1.8;
+  }
+  .final{
+    display:none;
+    text-align:center;
+    background:linear-gradient(160deg,#2a2116,#1c2333);
+    border:1px solid var(--brass);
+    padding:30px 22px;
+    margin-top:6px;
+  }
+  .final.show{display:block;animation:fadeIn .6s ease;}
+  .final h2{font-family:'Special Elite',monospace;color:var(--brass);font-size:1.4rem;margin-top:0;}
+  .final p{line-height:1.7;font-size:.98rem;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="folder">
+    <h1>Case File Access</h1>
+    <p>This dossier is sealed. Two detectives are cleared for entry tonight. Enter the password given to you at briefing.</p>
+    <input type="text" id="pw" placeholder="PASSWORD" autocomplete="off">
+    <button id="unlockBtn">Unseal File</button>
+    <div id="gateError"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pottawatomie County &middot; Case No. 1895-B (Reopened)</div>
+    <h1 class="title">The Missing Baker<br>of Main Street</h1>
+    <div class="subtitle">A self-guided investigation for two detectives &mdash; tonight only, county lines optional</div>
+  </header>
+
+  <div class="briefing">
+    <p><strong>The situation:</strong> Barnaby Voss ran the little ice cream counter on Main Street for forty years. Tonight was supposed to be his retirement party. He never showed. The shop was left running, the lights on, a fresh batch in the case &mdash; and Barnaby nowhere to be found. What he left behind is a trail, and this time it doesn't stay inside city limits. No answer is handed to you outright &mdash; you'll have to reason each one out, and you may need to look a few things up.</p>
+    <div class="facts">
+      <div><span>Assigned</span>Two detectives, one case</div>
+      <div><span>Runtime</span>Approx. 2&ndash;2.5 hours</div>
+      <div><span>Cost</span>Whatever you order for dessert</div>
+      <div><span>Territory</span>Shawnee &amp; Tecumseh</div>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- STOP 1 -->
+  <div class="card" id="card1">
+    <div class="tag">Stop One &middot; The Scene</div>
+    <h2>1895 Homemade Ice Cream</h2>
+    <div class="addr">102 E Main St, Shawnee &middot; <a href="https://maps.google.com/?q=1895+Homemade+Ice+Cream+102+E+Main+St+Shawnee+OK" target="_blank">open in Maps</a></div>
+    <p>Start here. Order whatever you want &mdash; this is the last batch Barnaby ever made, according to the note taped inside the door. Sit down, take a bite, and read what he left behind.</p>
+    <div class="clue-box">
+      "If you're reading this, I've gone looking for the county's oldest names before I start my own second act. Forty years scooping in this county, and I never once thought about who it's all named after. There's a town just south of here that borrows its name straight from a Shawnee leader &mdash; the one who spent his life trying to hold this land together before it came apart. Go stand on his street."
+    </div>
+    <p><strong>Riddle:</strong> What town, just south of Shawnee, is named for a Shawnee leader who tried to unite tribes against westward settlement in the early 1800s?</p>
+    <div class="riddle-form">
+      <input type="text" id="ans1" placeholder="TOWN NAME">
+      <button onclick="checkAnswer(1)">Submit</button>
+    </div>
+    <span class="hint-toggle" onclick="toggleHint(1)">Need a hint?</span>
+    <div class="hint-text" id="hint1">The town shares its name with the leader &mdash; and with the tribe Shawnee itself is named for.</div>
+    <div class="feedback" id="fb1"></div>
+    <div class="next-reveal" id="next1">
+      <p><strong>Correct &mdash; Tecumseh.</strong> Barnaby's note continues: "Named for the Shawnee leader himself. Go stand on the old main drag &mdash; Broadway. There's a row of storefronts there older than I am."</p>
+      <p>&rarr; Drive to <strong>S Broadway St, Tecumseh</strong> (about 10 minutes) for Stop Two.</p>
+    </div>
+    <div class="stamp" id="stamp1">SOLVED</div>
+  </div>
+
+  <!-- STOP 2 -->
+  <div class="card locked" id="card2">
+    <div class="locked-veil" id="veil2">Solve Stop One to unlock</div>
+    <div class="tag">Stop Two &middot; Main Street, Two Towns Over</div>
+    <h2>Tecumseh Historic Broadway District</h2>
+    <div class="addr">114 S Broadway St, Tecumseh &middot; <a href="https://maps.google.com/?q=114+S+Broadway+St+Tecumseh+OK" target="_blank">open in Maps</a></div>
+    <p>Park and walk the block. Everything's closed for the night, but the storefronts are still worth reading &mdash; especially the antique shop that sells baked goods on the side. Barnaby's next note was tucked in the doorframe.</p>
+    <div class="clue-box">
+      "I've spent my whole life two towns wide, never further. There's a park back toward Shawnee where the state keeps a wound it still tends every April &mdash; grass and a memorial, and inside it, something green that has no business surviving an Oklahoma winter. It isn't native. It isn't supposed to be here. Neither was I, most nights, after close. Find the plant that doesn't belong, and you'll find where I went next."
+    </div>
+    <p><strong>Riddle:</strong> Name the out-of-place plant, and the Shawnee park and memorial where it grows.</p>
+    <div class="riddle-form">
+      <input type="text" id="ans2" placeholder="PLANT NAME">
+      <button onclick="checkAnswer(2)">Submit</button>
+    </div>
+    <span class="hint-toggle" onclick="toggleHint(2)">Need a hint?</span>
+    <div class="hint-text" id="hint2">Think of the plant most associated with pandas, not Oklahoma. The memorial marks a 1995 bombing about 40 miles from here.</div>
+    <div class="feedback" id="fb2"></div>
+    <div class="next-reveal" id="next2">
+      <p><strong>Correct &mdash; bamboo, at Sister City Park.</strong> It grows near the walking trail by the Shawnee airport, beside the OKC bombing memorial. Barnaby's note: "Walk the loop. Find the quiet. That's where I'm going after this."</p>
+      <p>&rarr; Drive back toward Shawnee, to <strong>Sister City Park, N Airport Dr</strong> (about 15 minutes from here) for Stop Three.</p>
+    </div>
+    <div class="stamp" id="stamp2">SOLVED</div>
+  </div>
+
+  <!-- STOP 3 -->
+  <div class="card locked" id="card3">
+    <div class="locked-veil" id="veil3">Solve Stop Two to unlock</div>
+    <div class="tag">Stop Three &middot; The Getaway</div>
+    <h2>Sister City Park</h2>
+    <div class="addr">1600 N Airport Dr, Shawnee &middot; <a href="https://maps.google.com/?q=Sister+City+Park+Shawnee+OK" target="_blank">open in Maps</a></div>
+    <p>Walk a stretch of the trail together. Find a bench, or just stand under the bamboo, and read the last page Barnaby left.</p>
+    <div class="clue-box">
+      "I used to close the shop every night at nine and look east, past the rooftops, at the one structure in this town tall enough to still catch the last light. It doesn't ring for a fire or a ship coming in. It rings for a Baptist school on a hill, over a quad I never once set foot on in forty years. Its name matches the chapel it stands beside. Meet me there, under it, and we'll call this closed."
+    </div>
+    <p><strong>Riddle:</strong> What structure is Barnaby describing, and where does it stand?</p>
+    <div class="riddle-form">
+      <input type="text" id="ans3" placeholder="YOUR ANSWER">
+      <button onclick="checkAnswer(3)">Submit</button>
+    </div>
+    <span class="hint-toggle" onclick="toggleHint(3)">Need a hint?</span>
+    <div class="hint-text" id="hint3">It's on OBU's campus, and its name is also the name of the chapel it sits beside.</div>
+    <div class="feedback" id="fb3"></div>
+    <div class="next-reveal" id="next3">
+      <p><strong>Correct &mdash; Raley Chapel Clock Tower.</strong> One last drive.</p>
+      <p>&rarr; Head to <strong>2501 Raley Dr</strong> (OBU campus) for the final stop, about 10 minutes away.</p>
+    </div>
+    <div class="stamp" id="stamp3">SOLVED</div>
+  </div>
+
+  <!-- STOP 4 / FINALE -->
+  <div class="card locked" id="card4">
+    <div class="locked-veil" id="veil4">Solve Stop Three to unlock</div>
+    <div class="tag">Stop Four &middot; Case Closed</div>
+    <h2>Raley Chapel Clock Tower, OBU</h2>
+    <div class="addr">2501 Raley Dr, Shawnee &middot; <a href="https://maps.google.com/?q=Raley+Chapel+OBU+Shawnee+OK" target="_blank">open in Maps</a></div>
+    <p>Park near the quad and look up at the tower, lit against the dark. There's no more searching left &mdash; just one thing to decide.</p>
+    <div class="clue-box">
+      "You found every place I loved in this town without ever needing a badge. Truth is, nobody took me. I just finally asked myself what forty years behind a counter was for, and the answer was: to open a bigger one. There's a second shop going in across town, and I wanted the two of you &mdash; whoever you are, my last customers of the night &mdash; to be the first to know before anyone else. Case closed. Go finish your ice cream before it melts."
+    </div>
+    <p><strong>Type "CASE CLOSED" below to close the file.</strong></p>
+    <div class="riddle-form">
+      <input type="text" id="ans4" placeholder="TYPE HERE">
+      <button onclick="checkAnswer(4)">Submit</button>
+    </div>
+    <div class="feedback" id="fb4"></div>
+  </div>
+
+  <div class="final" id="finalCard">
+    <h2>&#10003; Case Closed</h2>
+    <p>Barnaby Voss was never missing. He was just closing one chapter of Main Street and starting another &mdash; and tonight, so did you two. Two detectives, one town, one melting dessert. Well done.</p>
+  </div>
+
+  <footer>
+    Built for one night only in Shawnee, OK &middot; No badges were required in the making of this case
+  </footer>
+</div>
+
+<script>
+  const PASSWORD = "BUTTERPECAN";
+
+  document.getElementById('unlockBtn').addEventListener('click', unlockGate);
+  document.getElementById('pw').addEventListener('keydown', e=>{ if(e.key==='Enter') unlockGate(); });
+
+  function unlockGate(){
+    const val = document.getElementById('pw').value.trim().toUpperCase();
+    if(val === PASSWORD){
+      document.getElementById('gate').classList.add('hidden');
+    } else {
+      document.getElementById('gateError').textContent = "Incorrect. This file stays sealed.";
+    }
+  }
+
+  const answers = {
+    1: ["TECUMSEH"],
+    2: ["BAMBOO","BAMBOO SISTER CITY PARK","SISTER CITY PARK BAMBOO"],
+    3: ["RALEY CHAPEL CLOCK TOWER","RALEY CHAPEL","CLOCK TOWER","RALEY TOWER","RALEY"],
+    4: ["CASE CLOSED"]
+  };
+
+  function toggleHint(n){
+    document.getElementById('hint'+n).classList.toggle('show');
+  }
+
+  function checkAnswer(n){
+    const input = document.getElementById('ans'+n);
+    const val = input.value.trim().toUpperCase();
+    const fb = document.getElementById('fb'+n);
+    if(answers[n].includes(val)){
+      fb.style.color = '#5c7359';
+      fb.textContent = "Correct.";
+      if(n < 4){
+        document.getElementById('next'+n).classList.add('show');
+        document.getElementById('stamp'+n).classList.add('show');
+        const nextCard = document.getElementById('card'+(n+1));
+        nextCard.classList.remove('locked');
+        document.getElementById('veil'+(n+1)).style.display='none';
+      } else {
+        document.getElementById('finalCard').classList.add('show');
+        document.getElementById('finalCard').scrollIntoView({behavior:'smooth', block:'center'});
+      }
+    } else {
+      fb.style.color = '#8a3324';
+      fb.textContent = "Not quite. Try again.";
+    }
+  }
+</script>
+
+</body>
+</html>

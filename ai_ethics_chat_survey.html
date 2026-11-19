@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Ethics Chat Survey</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f9f9f8;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 32px 16px 80px;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  #chat-header {
+    padding: 16px 0 12px;
+    border-bottom: 0.5px solid #e5e5e3;
+    margin-bottom: 20px;
+  }
+
+  #chat-header h1 {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+
+  #chat-header p {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  #messages {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 200px;
+  }
+
+  .msg {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    max-width: 85%;
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-weight: 500;
+  }
+
+  .avatar.ai {
+    background: #f0ede8;
+    border: 0.5px solid #e0ddd8;
+    color: #666;
+  }
+
+  .avatar.user {
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 11px;
+  }
+
+  .bubble {
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1a1a1a;
+    max-width: 100%;
+  }
+
+  .bubble.ai {
+    background: #fff;
+    border: 0.5px solid #e5e5e3;
+    border-radius: 4px 14px 14px 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  .bubble.user {
+    background: #eff6ff;
+    border: 0.5px solid #bfdbfe;
+    border-radius: 14px 4px 14px 14px;
+    color: #1e3a5f;
+  }
+
+  .typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 12px 14px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #bbb;
+    animation: blink 1.2s infinite;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes blink {
+    0%, 80%, 100% { opacity: 0.3; }
+    40% { opacity: 1; }
+  }
+
+  #input-area {
+    margin-top: 24px;
+    border-top: 0.5px solid #e5e5e3;
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .choice-btn {
+    padding: 7px 14px;
+    border: 0.5px solid #d1d1ce;
+    border-radius: 20px;
+    background: #fff;
+    color: #1a1a1a;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.12s;
+    font-family: inherit;
+    line-height: 1.4;
+    text-align: left;
+  }
+
+  .choice-btn:hover {
+    background: #f5f4f1;
+    border-color: #aaa;
+  }
+
+  .choice-btn.selected {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+  }
+
+  #multi-confirm {
+    padding: 8px 20px;
+    background: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: none;
+    align-self: flex-start;
+    transition: background 0.15s;
+  }
+
+  #multi-confirm:hover { background: #333; }
+
+  .progress-line {
+    font-size: 11px;
+    color: #aaa;
+    text-align: right;
+  }
+
+  #export-btn {
+    padding: 9px 20px;
+    background: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    align-self: flex-start;
+    margin-top: 8px;
+    transition: background 0.15s;
+  }
+
+  #export-btn:hover { background: #333; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="chat-header">
+    <h1>AI Ethics Survey</h1>
+    <p>12 questions · ~4 minutes · anonymous</p>
+  </div>
+
+  <div id="messages"></div>
+
+  <div id="input-area">
+    <div id="choices"></div>
+    <button id="multi-confirm" onclick="confirmMulti()">Done →</button>
+    <div class="progress-line" id="prog"></div>
+  </div>
+</div>
+
+<script>
+const qs = [
+  { id:"q1", cat:"General perception", text:"How would you describe your overall view of AI right now?", type:"single", opts:["Mostly positive — it's a tool for progress","Cautiously optimistic — promising but risky","Mostly skeptical — risks outweigh the benefits","Uncertain — I don't know enough to say"] },
+  { id:"q2", cat:"Familiarity", text:"How often do you use AI tools in daily life — things like chatbots, recommendations, or voice assistants?", type:"single", opts:["Every day","A few times a week","Occasionally","Rarely or never"] },
+  { id:"q3", cat:"Safety", text:"Should AI be allowed to make high-stakes decisions — in the military, medicine, criminal justice — without a human in the loop?", type:"single", opts:["Yes, if it's accurate enough","Only in low-risk cases","No, a human should always be involved","I'm not sure"] },
+  { id:"q4", cat:"Accountability", text:"When an AI system causes harm, who should be held most responsible?", type:"single", opts:["The company that built it","The government or regulator","The person or organization using it","No one — AI outcomes are unpredictable"] },
+  { id:"q5", cat:"Trust", text:"Do you trust AI companies to set their own ethical limits without government intervention?", type:"single", opts:["Yes, they know the tech best","Somewhat, with some oversight","No, regulation is necessary","I haven't thought about it much"] },
+  { id:"q6", cat:"Risk perception", text:"Which of these AI applications concern you most? Pick all that apply.", type:"multi", opts:["Autonomous weapons","Mass government surveillance","Deepfakes and misinformation","Job displacement","Biased or discriminatory algorithms","AI making legal or medical decisions","None of these concern me significantly"] },
+  { id:"q7", cat:"Regulation", text:"Governments should impose strict legal limits on what AI companies can do with their technology.", type:"single", opts:["Strongly agree","Agree","Neutral","Disagree","Strongly disagree"] },
+  { id:"q8", cat:"Corporate ethics", text:"Should a tech company refuse a government contract if it conflicts with their ethical guidelines — even if it means losing business?", type:"single", opts:["Yes, ethics over revenue","Depends on the situation","No, contracts are contracts","Not sure"] },
+  { id:"q9", cat:"Future outlook", text:"How do you think AI will affect society over the next 10 years?", type:"single", opts:["Transformative for the better","A mixed bag — good and bad","Dangerous if left unchecked","Overhyped — less impactful than claimed"] },
+  { id:"q10", cat:"Education", text:"How much had you thought about AI ethics before today?", type:"single", opts:["A lot — I follow it closely","Some — I've heard about it but not engaged deeply","A little — only in passing","Not at all — this is new territory"] },
+  { id:"q11", cat:"Values", text:"Which values should guide AI development most? Pick all that apply.", type:"multi", opts:["Human safety above all","Economic efficiency","Individual privacy and autonomy","Fairness and equal access","National security","Innovation and scientific progress","Environmental sustainability"] },
+  { id:"q12", cat:"Reflection", text:"After this conversation, do you feel like AI ethics is something your field of study needs to address?", type:"single", opts:["Yes, definitely","Probably, to some degree","Maybe, I'm not sure yet","Not really"] }
+];
+
+const INTRO = "Hey! I'm going to ask you 12 short questions about your views on AI — things like safety, trust, and ethics. There are no right or wrong answers. Ready?";
+
+let step = -1;
+let multiSel = [];
+const answers = {};
+
+const msgs = document.getElementById('messages');
+const choices = document.getElementById('choices');
+const multiConfirm = document.getElementById('multi-confirm');
+const prog = document.getElementById('prog');
+
+function scrollBottom() { msgs.scrollTop = msgs.scrollHeight; window.scrollTo(0, document.body.scrollHeight); }
+
+function addMsg(text, who) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + who;
+  const av = document.createElement('div');
+  av.className = 'avatar ' + who;
+  av.textContent = who === 'ai' ? '✦' : 'You';
+  const bub = document.createElement('div');
+  bub.className = 'bubble ' + who;
+  bub.textContent = text;
+  wrap.appendChild(av);
+  wrap.appendChild(bub);
+  msgs.appendChild(wrap);
+  scrollBottom();
+}
+
+function showTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai';
+  wrap.id = 'typing-indicator';
+  const av = document.createElement('div');
+  av.className = 'avatar ai';
+  av.textContent = '✦';
+  const bub = document.createElement('div');
+  bub.className = 'bubble ai typing';
+  [1,2,3].forEach(() => { const d = document.createElement('div'); d.className='dot'; bub.appendChild(d); });
+  wrap.appendChild(av);
+  wrap.appendChild(bub);
+  msgs.appendChild(wrap);
+  scrollBottom();
+}
+
+function removeTyping() { const t = document.getElementById('typing-indicator'); if(t) t.remove(); }
+
+function setChoices(opts, type) {
+  choices.innerHTML = '';
+  multiSel = [];
+  multiConfirm.style.display = type === 'multi' ? 'flex' : 'none';
+  opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = opt;
+    btn.onclick = () => type === 'multi' ? toggleMulti(btn, opt) : pick(opt);
+    choices.appendChild(btn);
+  });
+}
+
+function toggleMulti(btn, opt) {
+  if (btn.classList.contains('selected')) {
+    btn.classList.remove('selected');
+    multiSel = multiSel.filter(x => x !== opt);
+  } else {
+    btn.classList.add('selected');
+    multiSel.push(opt);
+  }
+}
+
+function confirmMulti() {
+  if (multiSel.length === 0) return;
+  pick(multiSel.join(', '));
+}
+
+function pick(val) {
+  choices.innerHTML = '';
+  multiConfirm.style.display = 'none';
+
+  if (step === -1) {
+    addMsg(val, 'user');
+    nextQuestion();
+    return;
+  }
+
+  const q = qs[step];
+  answers[q.id] = val;
+  addMsg(val, 'user');
+
+  showTyping();
+  setTimeout(() => { removeTyping(); nextQuestion(); }, 600 + Math.random() * 400);
+}
+
+function nextQuestion() {
+  step++;
+  if (step >= qs.length) { showDone(); return; }
+
+  const q = qs[step];
+  const bridge = step === 0 ? "Great! First question:" :
+    step === 6 ? "Good. A few more — this one's about regulation:" :
+    step === 9 ? "Almost there:" : null;
+
+  showTyping();
+  setTimeout(() => {
+    removeTyping();
+    if (bridge) {
+      addMsg(bridge, 'ai');
+      showTyping();
+      setTimeout(() => { removeTyping(); addMsg(q.text, 'ai'); setChoices(q.opts, q.type); prog.textContent = `${step + 1} of ${qs.length}`; scrollBottom(); }, 400);
+    } else {
+      addMsg(q.text, 'ai');
+      setChoices(q.opts, q.type);
+      prog.textContent = `${step + 1} of ${qs.length}`;
+      scrollBottom();
+    }
+  }, 500);
+}
+
+function showDone() {
+  addMsg("That's all 12 — thanks for sharing your thoughts. Here's a summary of your responses:", 'ai');
+  prog.textContent = '';
+
+  const rows = qs.map(q => `"${q.id}","${q.cat}","${q.text.replace(/"/g,'""')}","${(answers[q.id]||'').replace(/"/g,'""')}"`).join('\n');
+  const csv = `Question ID,Category,Question,Answer\n${rows}`;
+
+  const summary = document.createElement('div');
+  summary.className = 'msg ai';
+  summary.style.maxWidth = '92%';
+  let inner = '';
+  qs.forEach(q => {
+    inner += `<div style="margin-bottom:12px;"><span style="color:#aaa;font-size:11px;display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">${q.cat}</span><div style="font-weight:500;font-size:13px;margin-bottom:3px;">${q.text}</div><div style="color:#555;font-size:13px;">${answers[q.id] || '—'}</div></div>`;
+  });
+  summary.innerHTML = `<div class="avatar ai">✦</div><div class="bubble ai" style="font-size:13px;line-height:1.6;">${inner}</div>`;
+  msgs.appendChild(summary);
+  scrollBottom();
+
+  const exportBtn = document.createElement('button');
+  exportBtn.id = 'export-btn';
+  exportBtn.textContent = '↓ Export as CSV';
+  exportBtn.onclick = () => {
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'ai_ethics_responses.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+  choices.appendChild(exportBtn);
+}
+
+(function init() {
+  showTyping();
+  setTimeout(() => { removeTyping(); addMsg(INTRO, 'ai'); setChoices(["Let's go"], 'single'); }, 700);
+})();
+</script>
+</body>
+</html>

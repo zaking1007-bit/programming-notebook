@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ground | AI Operations for Independent Coffee Shops</title>
+<style>
+  :root {
+    --paper: #f8f5ef;
+    --ink: #17120d;
+    --muted: #6f655b;
+    --line: #ddd4c8;
+    --clay: #a84f21;
+    --sage: #536b54;
+    --blue: #2d5f73;
+    --gold: #d99b35;
+    --white: #fffdf9;
+    --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.55;
+  }
+
+  a { color: inherit; }
+  .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(248, 245, 239, 0.93);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  nav {
+    min-height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+  }
+
+  .brand {
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .nav-links a { text-decoration: none; }
+  .nav-links a:hover { color: var(--ink); }
+
+  .nav-cta, .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 6px;
+    background: var(--ink);
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 700;
+    border: 1px solid var(--ink);
+  }
+
+  .button.secondary {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--line);
+  }
+
+  .hero {
+    padding: 84px 0 56px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+    gap: 46px;
+    align-items: center;
+  }
+
+  .eyebrow {
+    margin: 0 0 14px;
+    color: var(--clay);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+
+  h1, h2, h3, p { margin-top: 0; }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(46px, 7vw, 78px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    margin-bottom: 22px;
+  }
+
+  .hero-copy {
+    max-width: 650px;
+    color: #3f352c;
+    font-size: 19px;
+    margin-bottom: 28px;
+  }
+
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+
+  .proof-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .proof {
+    border: 1px solid var(--line);
+    background: rgba(255, 253, 249, 0.72);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .proof strong { display: block; font-size: 23px; line-height: 1; margin-bottom: 5px; }
+  .proof span { color: var(--muted); font-size: 13px; }
+
+  .demo-panel {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 22px 60px rgba(23, 18, 13, 0.10);
+  }
+
+  .panel-top {
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .screen {
+    padding: 18px;
+    display: grid;
+    gap: 12px;
+  }
+
+  .metric-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .mini-metric {
+    border: 1px solid #ece3d9;
+    border-radius: 6px;
+    padding: 12px;
+    background: #fbf8f2;
+  }
+
+  .mini-metric b { display: block; font-size: 21px; }
+  .mini-metric span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .insight {
+    border-left: 4px solid var(--sage);
+    padding: 12px 14px;
+    background: #eef2eb;
+    border-radius: 4px;
+    color: #263528;
+    font-size: 14px;
+  }
+
+  section { padding: 74px 0; }
+  .section-head { max-width: 720px; margin-bottom: 34px; }
+  h2 {
+    font-family: var(--serif);
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    margin-bottom: 14px;
+  }
+  .section-head p { color: var(--muted); font-size: 18px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 22px;
+  }
+
+  .card h3 { font-size: 20px; margin-bottom: 8px; }
+  .card p { color: var(--muted); margin-bottom: 16px; }
+  .tag {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    padding: 4px 10px;
+    color: #51463c;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .band {
+    background: #20150f;
+    color: var(--white);
+  }
+  .band .section-head p, .band .muted { color: #d2c4b7; }
+  .band .card {
+    background: #2a1c14;
+    border-color: rgba(255,255,255,0.12);
+  }
+  .band .card p { color: #d2c4b7; }
+  .band .tag { color: #f2d59b; border-color: rgba(242,213,155,0.25); }
+
+  .timeline {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    counter-reset: step;
+  }
+
+  .step {
+    position: relative;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 22px;
+  }
+  .step::before {
+    counter-increment: step;
+    content: counter(step);
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--clay);
+    color: white;
+    font-weight: 800;
+    margin-bottom: 14px;
+  }
+
+  .demo-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .demo-link {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--white);
+    text-decoration: none;
+  }
+  .demo-link:hover { border-color: var(--clay); }
+  .demo-link b { display: block; margin-bottom: 3px; }
+  .demo-link span { color: var(--muted); font-size: 14px; }
+  .arrow { color: var(--clay); font-weight: 900; }
+
+  .cta {
+    background: var(--blue);
+    color: var(--white);
+    border-radius: 8px;
+    padding: 34px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: center;
+  }
+  .cta h2 { font-size: clamp(30px, 4vw, 44px); }
+  .cta p { color: #e2eef2; margin-bottom: 0; }
+  .cta .button { background: var(--white); color: var(--blue); border-color: var(--white); }
+
+  footer {
+    padding: 28px 0;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 860px) {
+    .nav-links { display: none; }
+    .hero-grid, .grid, .timeline, .demo-list, .cta { grid-template-columns: 1fr; }
+    .proof-row, .metric-strip { grid-template-columns: 1fr; }
+    section { padding: 54px 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <nav class="wrap">
+    <a href="#" class="brand">Ground</a>
+    <div class="nav-links">
+      <a href="#capabilities">Capabilities</a>
+      <a href="#pilot">Launch Plan</a>
+      <a href="#demos">Demos</a>
+      <a href="#meeting">Meeting</a>
+    </div>
+    <a class="nav-cta" href="mailto:hello@groundai.co">Book a Call</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">AI operations partner for independent coffee shops</p>
+        <h1>Practical AI tools that help small shops run with clearer data.</h1>
+        <p class="hero-copy">Ground turns everyday business data into useful operating tools: revenue leak audits, customer profiles, review insights, menu recommendations, scheduling support, and vendor contract analysis.</p>
+        <div class="hero-actions">
+          <a class="button" href="#pilot">See the fast launch plan</a>
+          <a class="button secondary" href="#demos">Open demo tools</a>
+        </div>
+        <div class="proof-row">
+          <div class="proof"><strong>2 weeks</strong><span>Suggested first pilot window</span></div>
+          <div class="proof"><strong>5 demos</strong><span>Ready for meeting walkthrough</span></div>
+          <div class="proof"><strong>1 shop</strong><span>Start focused, then expand</span></div>
+        </div>
+      </div>
+      <aside class="demo-panel" aria-label="Ground dashboard preview">
+        <div class="panel-top"><b>Ground Operations Snapshot</b><span>Demo</span></div>
+        <div class="screen">
+          <div class="metric-strip">
+            <div class="mini-metric"><span>Forecast</span><b>11:30 AM</b></div>
+            <div class="mini-metric"><span>Opportunity</span><b>$3.4k</b></div>
+            <div class="mini-metric"><span>Priority</span><b>Labor</b></div>
+          </div>
+          <div class="insight"><b>Recommended action:</b> add one trained barista to the lunch rush and prep more cold brew before Thursday. Demand pattern is above the recent weekday baseline.</div>
+          <div class="insight" style="border-left-color:var(--clay);background:#f7eee8;color:#3e2418;"><b>Revenue leak:</b> average ticket is below target. Push pastry pairing on espresso drinks and test a rotating bundle for the next 10 business days.</div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="capabilities">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">What Ground can build</p>
+        <h2>A focused toolkit for revenue, operations, and customer loyalty.</h2>
+        <p>Each module can stand alone as a quick win or connect into a larger operating dashboard as the business grows.</p>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h3>Revenue Leak Audit</h3>
+          <p>Simple intake that estimates where money is slipping through labor, supply waste, menu mix, upsells, vendor pricing, and review performance.</p>
+          <span class="tag">Fastest pilot</span>
+        </article>
+        <article class="card">
+          <h3>Operations Dashboard</h3>
+          <p>Sales, order volume, peak hours, top items, labor signals, and prep recommendations in one private browser-based view.</p>
+          <span class="tag">Owner view</span>
+        </article>
+        <article class="card">
+          <h3>Customer Profile Engine</h3>
+          <p>Tracks preferences, visit history, likely next order, loyalty triggers, and staff notes for better service and smarter offers.</p>
+          <span class="tag">Loyalty</span>
+        </article>
+        <article class="card">
+          <h3>Menu Optimization</h3>
+          <p>Identifies high-margin winners, slow movers, attachment opportunities, and simple price or bundle tests.</p>
+          <span class="tag">Margin</span>
+        </article>
+        <article class="card">
+          <h3>Sentiment Scanner</h3>
+          <p>Summarizes reviews into themes, recurring issues, competitive context, and recommended owner responses or marketing angles.</p>
+          <span class="tag">Reputation</span>
+        </article>
+        <article class="card">
+          <h3>Vendor Contract Analyzer</h3>
+          <p>Reviews supplier contracts and invoices for unclear renewal terms, price exposure, payment risk, missing protections, and negotiation points.</p>
+          <span class="tag">Procurement</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="pilot">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Launch quickly</p>
+        <h2>Start with a useful pilot, then expand only where the data proves value.</h2>
+        <p>The recommended first version is intentionally small: enough to demonstrate capability, collect data, and create a clear reason to keep going.</p>
+      </div>
+      <div class="timeline">
+        <article class="step">
+          <h3>Collect</h3>
+          <p class="muted">Gather POS export, menu, staffing rhythm, supplier/invoice examples, and public review links.</p>
+        </article>
+        <article class="step">
+          <h3>Analyze</h3>
+          <p class="muted">Run the revenue leak audit, review sentiment scan, and dashboard baseline from the first data batch.</p>
+        </article>
+        <article class="step">
+          <h3>Launch</h3>
+          <p class="muted">Deploy one or two owner-facing tools first: usually dashboard plus revenue audit or customer profile engine.</p>
+        </article>
+        <article class="step">
+          <h3>Improve</h3>
+          <p class="muted">Use weekly results to decide whether scheduling, menu tests, marketing, or vendor analysis should come next.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="demos">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Demo kit</p>
+        <h2>Meeting-ready examples you can open from this folder.</h2>
+        <p>These are prototype pages and reports designed to explain the offer quickly. They can become the foundation for a live pilot.</p>
+      </div>
+      <div class="demo-list">
+        <a class="demo-link" href="demos/ground_dashboard.html"><span><b>Operations Dashboard</b><span>Owner view for sales, rushes, menu movement, and labor signals.</span></span><span class="arrow">→</span></a>
+        <a class="demo-link" href="demos/revenue_leak_audit.html"><span><b>Revenue Leak Audit</b><span>Intake tool that turns owner answers into prioritized opportunities.</span></span><span class="arrow">→</span></a>
+        <a class="demo-link" href="demos/ground_customer_engine.html"><span><b>Customer Profile Engine</b><span>Preference and loyalty view for repeat customer service.</span></span><span class="arrow">→</span></a>
+        <a class="demo-link" href="demos/comma_cafe_sentiment_report.html"><span><b>Sentiment Report</b><span>Example review analysis with operational recommendations.</span></span><span class="arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="meeting">
+    <div class="wrap">
+      <div class="cta">
+        <div>
+          <p class="eyebrow" style="color:#f3cf87;">Suggested meeting close</p>
+          <h2>Offer a 14-day pilot with one clear business outcome.</h2>
+          <p>Best first ask: permission to review a POS export, menu, public reviews, and one vendor document so Ground can return a dashboard snapshot and prioritized action plan.</p>
+        </div>
+        <a class="button" href="mailto:hello@groundai.co">Start the pilot</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Ground AI consulting concept package. Prototype materials for discussion; not legal, tax, or financial advice.</div>
+</footer>
+</body>
+</html>

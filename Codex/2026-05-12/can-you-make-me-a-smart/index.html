@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Grocery List</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-label="Grocery list header">
+        <div>
+          <p class="eyebrow">Shared grocery board</p>
+          <h1>Kitchen Run</h1>
+        </div>
+        <div class="week-badge">
+          <span id="todayLabel">Today</span>
+          <strong id="itemCount">0 items</strong>
+        </div>
+      </section>
+
+      <section class="hero-grid">
+        <form id="addForm" class="entry-panel" autocomplete="off">
+          <label for="itemInput">Add an item</label>
+          <div class="input-row">
+            <input
+              id="itemInput"
+              type="text"
+              placeholder="Try: 2 avocados, milk, chicken breast..."
+              aria-label="Grocery item"
+            />
+            <button class="primary-btn" type="submit">Add</button>
+          </div>
+          <div class="quick-adds" aria-label="Quick add grocery items">
+            <button type="button" data-quick="eggs">Eggs</button>
+            <button type="button" data-quick="bananas">Bananas</button>
+            <button type="button" data-quick="coffee">Coffee</button>
+            <button type="button" data-quick="paper towels">Paper towels</button>
+          </div>
+        </form>
+
+        <aside class="dashboard" aria-label="Grocery cost dashboard">
+          <div class="stat-card total">
+            <span>Estimated total</span>
+            <strong id="totalCost">$0.00</strong>
+          </div>
+          <div class="stat-card">
+            <span>Average per item</span>
+            <strong id="averageCost">$0.00</strong>
+          </div>
+          <div class="stat-card">
+            <span>Remaining</span>
+            <strong id="remainingCount">0</strong>
+          </div>
+        </aside>
+      </section>
+
+      <section class="controls" aria-label="List controls">
+        <div class="search-wrap">
+          <span aria-hidden="true">⌕</span>
+          <input id="searchInput" type="search" placeholder="Search your list" />
+        </div>
+        <div class="control-buttons">
+          <button id="clearDoneBtn" type="button">Clear checked</button>
+          <button id="resetBtn" type="button">Reset list</button>
+        </div>
+      </section>
+
+      <section id="emptyState" class="empty-state">
+        <div class="produce-mark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <h2>Your list is ready.</h2>
+        <p>Type what you need and it will sort itself into the right aisle.</p>
+      </section>
+
+      <section id="categoryBoard" class="category-board" aria-live="polite"></section>
+    </main>
+
+    <template id="categoryTemplate">
+      <article class="category-card">
+        <header>
+          <div>
+            <span class="category-icon" aria-hidden="true"></span>
+            <h2></h2>
+          </div>
+          <strong class="category-total"></strong>
+        </header>
+        <ul></ul>
+      </article>
+    </template>
+
+    <template id="itemTemplate">
+      <li class="grocery-item">
+        <label class="check-wrap">
+          <input type="checkbox" />
+          <span></span>
+        </label>
+        <div class="item-main">
+          <input class="item-name" type="text" aria-label="Item name" />
+          <span class="item-meta"></span>
+        </div>
+        <div class="item-cost">
+          <span>$</span>
+          <input class="price-input" type="number" min="0" step="0.01" aria-label="Estimated price" />
+        </div>
+        <button class="delete-btn" type="button" aria-label="Remove item">×</button>
+      </li>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
