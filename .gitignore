@@ -2,10 +2,18 @@
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+credentials.*
+secrets.*
 
 # Python cache
 __pycache__/
 *.py[cod]
+
+# Dependencies and local inspection data
+node_modules
+.codex-inspect/
 
 # Virtual environments
 venv/
@@ -16,3 +24,18 @@ venv/
 
 # IDE settings
 .vscode/
+
+# Generated or input data; retain locally but do not publish
+Codex/**/outputs/
+Codex/**/extracted_text/
+Codex/**/work/input_render/
+Codex/**/work/rendered/
+**/reports/
+bias-auditor-web/bias_audit_*.txt
+
+# Local projects containing personal records or source data
+Codex/2026-05-06/files-mentioned-by-the-user-ch01/
+Codex/2026-05-17/if-i-were-to-ask-you/
+Codex/2026-08-26/pu/
+Codex/2026-09-12/referenced-chatgpt-conversation-this-is-an/
+web-apps/omega-pnm-tracker/

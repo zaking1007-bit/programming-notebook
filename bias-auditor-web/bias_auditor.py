@@ -83,11 +83,21 @@ response = client.messages.create(
     }]
 )
 
-print("=================================")
-print("         AUDIT RESULTS")
-print("=================================\n")
-print(response.content[0].text)
+report_content = response.content[0].text
 
-print("\n=================================")
-print("Audit complete. Save this report!")
-print("=================================")
+# Create a filename with date and time
+from datetime import datetime
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+filename = f"bias_audit_{timestamp}.txt"
+
+with open(filename, "w") as f:
+    f.write(f"BIAS AUDIT REPORT\n")
+    f.write(f"Generated: {timestamp}\n")
+    f.write(f"Content Type: {content_type}\n")
+    f.write("="*50 + "\n\n")
+    f.write(f"ORIGINAL TEXT:\n{text}\n\n")
+    f.write("="*50 + "\n\n")
+    f.write(f"AUDIT RESULTS:\n\n{report_content}")
+
+print(f"\nReport saved as: {filename}")
+print("You can email this file directly to your client.")
